@@ -7,9 +7,9 @@ A Python project to edit video, photo and audio using various system calls mostl
 
      Slicing Videos To Time :  ./ffmpegHelper.py -s1 v.mov 0:34 0:39 out.mov
     Slicing Videos To Range :  ./ffmpegHelper.py -s2 v.mov 0:34 0:39 out.mov
-   Instagram Without Resize :  ./ffmpegHelper.py -i1 v.mov 0:34 0:39 720:720:300:0 out.mp4
+    Instagram Without Resize :  ./ffmpegHelper.py -i1 v.mov 0:34 0:39 720:720:300:0 out.mp4
       Instagram With Resize :  ./ffmpegHelper.py -i2 v.mov 0:34 0:39 720:720:300:0 out.mp4
-Almost Lossless With Resize :  ./ffmpegHelper.py -i3 v.mov 0:34 0:39 720:720:300:0 out.mp4
+      Almost Lossless With Resize :  ./ffmpegHelper.py -i3 v.mov 0:34 0:39 720:720:300:0 out.mp4
       YouTube Audio Removed :  ./ffmpegHelper.py -y1 v.mov 0:34 0:39 out.mp4
                     YouTube :  ./ffmpegHelper.py -y2 v.mov 0:34 0:39 out.mp4
               Concat Videos :  ./ffmpegHelper.py -c1 out.mp4
