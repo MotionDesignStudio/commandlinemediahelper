@@ -5,6 +5,8 @@ import sys
 import subprocess
 from subprocess import PIPE, run
 import re
+import os
+from random import *
 
 print ( "Numer arguments : ", len(sys.argv), " arguments.")
 
@@ -16,7 +18,7 @@ crop_value=""
 media_duration =""
 out_file=""
 
-#if ( not re.search('-(h|c1)', sys.argv[1] ) ):
+
 
 def getMediaLength( the_file ):
 	print ( "CALCULATING %s LENGTH" % ( the_file ) )
@@ -25,11 +27,14 @@ def getMediaLength( the_file ):
 	return  getMediaLengthValue.stdout 
 
 # If not help set values
+#if ( not re.search('-(h|c1)', sys.argv[1] ) ):
 if ( not re.search('-(h)', sys.argv[1] ) ):
 	print ( "Setting values for video_file and out_file"  )
 	video_file=sys.argv[2]
 	out_file=sys.argv[ len(sys.argv) - 1 ] # The last value passed to the code
-	media_duration = getMediaLength( video_file ) if sys.argv[4] == "0" else sys.argv[4] 
+	# media_duration = getMediaLength( video_file ) if sys.argv[4] == "0" else sys.argv[4]
+	if ( not re.search('-(c1|c2|e1)', sys.argv[1] ) ): 
+		media_duration = getMediaLength( video_file ) if sys.argv[4] == "0" else sys.argv[4]
 
 def useFFmpegClass():
 	ff = ffmpy.FFmpeg( 
@@ -41,11 +46,43 @@ def useFFmpegClass():
 	# Run a preview of the video
 	subprocess.call( 'mplayer %s -loop 0'  % ( out_file ) , shell=True )
 
+# Search for cx.x movies and place them in the file l.txt example : file 'c36'.mov
+
+def searchForConcatFiles():
+	print ("*** Searching For cx.x Videos To Concat ***")
+
+	# Open or create the file l.txt for storing the files that need to be concated
+	fo = open ( "l.txt", "w")
+	print ( fo.name )
+
+	listOfFilesToAlphabetize = []
+	#for name in glob.glob('./c\d+.*'):
+	for filename in os.listdir ("./"):
+		if ( re.match (r"c\d+.*" , filename ) and  os.path.splitext(filename)[1] != ".ts"):
+			# Display file name without extension
+			#print ( os.path.splitext(filename)[1] )
+			# Convert file to .ts
+			run('ffmpeg -i %s -c copy -bsf:v h264_mp4toannexb -f mpegts %s.ts' % ( filename, os.path.splitext(filename)[0] ), stdout=PIPE, stderr=PIPE, universal_newlines=True, shell=True)
+			listOfFilesToAlphabetize.append( '%s.ts' % ( os.path.splitext(filename)[0] ) )
+	for i in sorted ( listOfFilesToAlphabetize ) :
+		fo.write ( "file " + "'" + i + "' \n")
+
+	# Close the file
+	fo.close ()
+
+def searchForConcatFilesAndRemove():
+	#print ("*** Searching For cx.ts Videos To Remove ***")
+
+	for filename in os.listdir ("./"):
+		if ( re.match (r"c\d+.ts" , filename ) ):
+			# Remove cX.ts file
+			run('rm %s' % ( filename ), stdout=PIPE, stderr=PIPE, universal_newlines=True, shell=True)
+
 # Help 
 
 def displayHelp ():
 
-	print ( '{:>30} {:<0}'. format ( "Examples :", "Videos\n" ) )
+	print ( '{:>30} {:<0}'. format ( "Examples :", "Videos | Audio | Photos\n" ) )
 	print ( '{:>30} {:<0}'. format ( "Slicing Videos To Time : ", "./ffmpegHelper.py -s1 v.mov 0:34 0:39 out.mov" ) )
 	print ( '{:>30} {:<0}'. format ( "Slicing Videos To Range : ", "./ffmpegHelper.py -s2 v.mov 0:34 0:39 out.mov" ) )
 	print ( '{:>30} {:<0}'. format ( "Instagram Without Resize : ", "./ffmpegHelper.py -i1 v.mov 0:34 0:39 720:720:300:0 out.mp4" ) )
@@ -56,10 +93,10 @@ def displayHelp ():
 	print ( '{:>30} {:<0}'. format ( "Concat Videos : ", "./ffmpegHelper.py -c1 out.mp4" ) )
 	print ( '{:>30} {:<0}'. format ( "Concat Videos Youtube BRND : ", "./ffmpegHelper.py -c2 out.mp4" ) )
 	print ( '{:>30} {:<0}'. format ( "Combine Video and Audio : ", "./ffmpegHelper.py -c3 v.mov out.mp3 out.mkv" ) )
-	print ( '{:>30} {:<0}'. format ( "Overlay Text and Image : ", './ffmpegHelper.py -t1 out.mov "Overlayed Text" /pathto/font.ttf out.mp4' ) )
-	print ( '{:>30} {:<0}'. format ( "Overlay Text : ", './ffmpegHelper.py -t2 text.mov "Overlayed Text" /pathto/font.ttf out.mp4' ) )
+	print ( '{:>30} {:<0}'. format ( "Overlay Text/Image 2 Video : ", './ffmpegHelper.py -t1 out.mov "Overlayed Text" /pathto/font.ttf out.mp4' ) )
+	print ( '{:>30} {:<0}'. format ( "Overlay Text To Video : ", './ffmpegHelper.py -t2 text.mov "Overlayed Text" /pathto/font.ttf out.mp4' ) )
 	print ( '{:>30} {:<0}'. format ( "Preview Video : ", './ffmpegHelper.py -p v.mov 0:34 0:39 720:720:300:0' ) )
-	print ( '{:>30} {:<0}'. format ( "Slow Motion : ", './ffmpegHelper.py -e1 v.mov 0:34 0:39 2.5 out.mp4' ) )
+	print ( '{:>30} {:<0}'. format ( "Slow Motion : ", './ffmpegHelper.py -e1 v.mov 4 out.mp4' ) )
 	print ( '{:>30} {:<0}'. format ( "Slow Motion No Audio : ", './ffmpegHelper.py -e2 v.mov 0:34 0:39 2.5 out.mp4' ) )
 	print ( '{:>30} {:<0}'. format ( "Black And White : ", './ffmpegHelper.py -e3 v.mov 0:34 0:39 out.mp4' ) )
 	print ( '{:>30} {:<0}'. format ( "Black And White No Audio : ", './ffmpegHelper.py -e4 v.mov 0:34 0:39 out.mp4' ) )
@@ -71,13 +108,14 @@ def displayHelp ():
 	print ( '{:>30} {:<0}'. format ( "Resize Arbitrary : ", './ffmpegHelper.py -e10 v.mov 0:34 0:39 416 416 out.mp4' ) )
 	print ( '{:>30} {:<0}'. format ( "Resize Arbitrary No Audio : ", './ffmpegHelper.py -e11 v.mov 0:34 0:39 416 416 out.mp4' ) )
 	print ( '{:>30} {:<0}'. format ( "Combine Audio With Image : ", './ffmpegHelper.py -e12 i.png a.mp3 out.mp4' ) )
+	print ( '{:>30} {:<0}'. format ( "Turn Image Into Video : ", './ffmpegHelper.py -e13 i.png 5 out.mp4' ) )
 	print ( '{:>30} {:<0}'. format ( "Audio Volume : ", './ffmpegHelper.py -a1 a.mp3 2 b.mp3' ) )
-	print ( '{:>30} {:<0}'. format ( "Add Caption To A Photo : ", './ffmpegHelper.py -p1 i.png /pathto/font.ttf "Hello World" out.png
-' ) )
-	print ( '{:>30} {:<0}'. format ( "Resize A Photo : ", './ffmpegHelper.py -p2 i.png 150X700! out.png
-' ) )
+	print ( '{:>30} {:<0}'. format ( "Caption To A Photo : ", './ffmpegHelper.py -p1 i.png /pathto/font.ttf "Hello World" out.png' ) )
+	print ( '{:>30} {:<0}'. format ( "Caption From temp.txt : ", './ffmpegHelper.py -p2 #123456 "#344567" /home/lex/share/Mo_De_Studio/audio_blog/Bookerly/Bookerly-Bold.ttf "1280x720" "#123456" 10 out.png' ) )
+	print ( '{:>30} {:<0}'. format ( "Resize A Photo : ", './ffmpegHelper.py -p3 i.png 150X700! out.png' ) )
 
 	print ( '{:>30} {:<0}'. format ( "Hint : ", "Use 0 to choose media length example : ./ffmpegHelper.py -p v.mov 0:34 0 720:720:300:0" ) )
+	print ( '{:>30} {:<0}'. format ( "Hint : ", "To use c1 and c2 the filenames must be sequenced like this you can mix and match suffixes c1.xxx, c2.xxx ... c400.xxx " ) )
 	print ( '{:>30} {:<0}'. format ( "Help : ", "./ffmpegHelper.py -h" ) )
 
 if ( sys.argv[1] == "-h"):
@@ -85,17 +123,10 @@ if ( sys.argv[1] == "-h"):
 
 # ] Slicing A Video [
 
-# ffmpeg -i MVI_5487.MOV -ss 00:00:14.0 -c copy -t 00:00:6.0 -an b.MOV
-
-# ./ffmpegHelper.py -s v.mov 0:34 0:39 myout.mov
-
-
 if ( sys.argv[1] == "-s1"):
 	print ("*** Slicing Video To Time***")
-	ffmpeg_command = "-ss %s -c copy -to %s -y" % ( sys.argv[3],  media_duration )
-
+	ffmpeg_command = "-ss %s -to %s -c copy -y" % ( sys.argv[3],  media_duration )
 	useFFmpegClass()
-
 
 if ( sys.argv[1] == "-s2"):
 	print ("*** Slicing Video Range***")
@@ -111,8 +142,6 @@ if ( sys.argv[1] == "-s3"):
 # ] For Instagram I [
 # ffmpeg -i MVI_9579.MOV -i brandVideos.png -ss 00:00:14.0 -t 00:00:02.0 -codec:v libx264 -filter_complex "crop=640:640:440:50,overlay=x=10:y=10" -profile:v baseline -preset slow -pix_fmt yuv420p -b:v 3500k -threads 0 -an -y 4.mp4
 
-# ./ffmpegHelper.py -i1 v.mov 0:34 0:39 720:720:300:0 out.mov
-
 if ( sys.argv[1] == "-i1"):
 	crop_value= sys.argv[5]
 	print ("*** For Instagram Without Resize ***")
@@ -121,45 +150,34 @@ if ( sys.argv[1] == "-i1"):
 
 # ] For Instagram II [
 
-# ./ffmpegHelper.py -i2 v.mov 0:34 0:39 720:720:300:0 out.mov
-
 if ( sys.argv[1] == "-i2"):
 	crop_value= sys.argv[5]
 	print ("*** For Instagram With Resize ***")
-	ffmpeg_command = "-i brandVideos.png -ss " + sys.argv[3] +" -t " + media_duration + " -codec:v libx264 "+ ' -filter_complex "crop=' + crop_value +',scale=-1:640,overlay=x=10:y=10" ' +" -profile:v baseline -preset slow -pix_fmt yuv420p -b:v 3500k -threads 0 -an -y"
+	ffmpeg_command = "-i brandVideos.png -ss " + sys.argv[3] +" -to " + media_duration + " -codec:v libx264 "+ ' -filter_complex "crop=' + crop_value +',scale=-1:640,overlay=x=10:y=10" ' +" -profile:v baseline -preset slow -pix_fmt yuv420p -b:v 3500k -threads 0 -an -y"
 	useFFmpegClass()
 
 # ] Almost Lossless [
 
 # ffmpeg -i MVI_9632.MOV -i brandVideos.png -ss 00:00:12.0 -t 00:00:21.0 -codec:v libx264 -filter_complex "crop=720:720:220:0,scale=-1:640,overlay=x=10:y=10" -crf 0 -preset ultrafast -c:a libmp3lame -b:a 320k -an -y s1.mp4
 
-# ./ffmpegHelper.py -i3 v.mov 0:34 0:39 720:720:300:0 out.mov
-
 if ( sys.argv[1] == "-i3"):
 	crop_value= sys.argv[5]
 	print ("*** Almost Lossless With Resize ***")
-	ffmpeg_command = "-i brandVideos.png -ss " + sys.argv[3] +" -t " + media_duration + " -codec:v libx264 "+ ' -filter_complex "crop=' + crop_value +',scale=-1:640,overlay=x=10:y=10" ' +" -crf 0 -preset ultrafast -c:a libmp3lame -b:a 320k -an -y"
+	ffmpeg_command = "-i brandVideos.png -ss " + sys.argv[3] +" -to " + media_duration + " -codec:v libx264 "+ ' -filter_complex "crop=' + crop_value +',scale=-1:640,overlay=x=10:y=10" ' +" -crf 0 -preset ultrafast -c:a libmp3lame -b:a 320k -an -y"
 	useFFmpegClass()
-
 
 # ] YouTube [
 
-# ffmpeg -i input.avi -c:v libx264 -preset slow -crf 18 -c:a copy -pix_fmt yuv420p output.mkv
-
-# ./ffmpegHelper.py -y1 v.mov 0:34 0:39 out2.mov
-
 if ( sys.argv[1] == "-y1"):
 	print ("*** YouTube and Other Video Sharing Sites Audio Removed ***")
-	ffmpeg_command = "-i cornerFinal.png -ss " + sys.argv[3] +" -to " + media_duration + ' -filter_complex "overlay=x=0:y=0" ' + " -c:v libx264 -preset slow -crf 18 -pix_fmt yuv420p -an -movflags +faststart -y"
+	ffmpeg_command = "-i cornerFinalBlack.png -ss " + sys.argv[3] +" -to " + media_duration + ' -filter_complex "overlay=x=0:y=0" ' + " -c:v libx264 -preset slow -crf 18 -pix_fmt yuv420p -an -movflags +faststart -y"
 	useFFmpegClass()
 
 # ] Audio Intact [
 
-# ./ffmpegHelper.py -y2 v.mov 0:34 0:39 out2.mov
-
 if ( sys.argv[1] == "-y2"):
 	print ("*** YouTube and Other Video Sharing Sites ***")
-	ffmpeg_command = "-i cornerFinal.png -ss " + sys.argv[3] +" -to " + media_duration + ' -filter_complex "overlay=x=0:y=0" ' + " -c:v libx264 -preset slow -crf 18 -c:a copy -pix_fmt yuv420p -movflags +faststart -y"
+	ffmpeg_command = "-i cornerFinalBlack.png -ss " + sys.argv[3] +" -to " + media_duration + ' -filter_complex "overlay=x=0:y=0" ' + " -c:v libx264 -preset slow -crf 18 -c:a copy -pix_fmt yuv420p -movflags +faststart -y"
 	useFFmpegClass()
 
 
@@ -172,22 +190,16 @@ if ( sys.argv[1] == "-y2"):
 
 if ( sys.argv[1] == "-t1"):
 	print ("*** Overlay Text and Image To Video ***")
-
 	ffmpeg_command = '-i brandVideos.png -filter_complex "[0] [1] overlay=x=10:y=10 [b]; [b] drawtext=fontfile=%s:text=%s:fontcolor=0xFFFFFFFF:fontsize=36:x=20:y=10: #shadowcolor=0x000000EE:shadowx=2:shadowy=2" -c:v libx264 -preset slow -crf 18 -c:a copy -pix_fmt yuv420p -y' % ( media_duration, sys.argv[3] )
 
 	useFFmpegClass()
 
 if ( sys.argv[1] == "-t2"):
 	print ("*** Overlay Text To Video ***")
-
 	ffmpeg_command = '-filter_complex "drawtext=fontfile=%s:text=%s:fontcolor=0xFFFFFFFF:fontsize=36:x=20:y=10: #shadowcolor=0x000000EE:shadowx=2:shadowy=2" -c:v libx264 -preset slow -crf 18 -c:a copy -pix_fmt yuv420p -y' % ( media_duration, sys.argv[3] )
-
 	useFFmpegClass()
 
 # Previewing A File
-# ffplay -i acrobaticyoga_Sara_R_2.mp4 -vf "crop=640:640:320:60" -ss 00:00:00.0 -t 00:01:03.0 
-# ./ffmpegHelper.py -p v.mov 0:34 0:39 720:720:300:0 
-
 
 if ( sys.argv[1] == "-p"):
 	print ("*** Preview Video ***")
@@ -200,18 +212,22 @@ if ( sys.argv[1] == "-p"):
 
 if ( sys.argv[1] == "-c1"):
 	print ("*** Concat Videos Remove Audio ***")
+	searchForConcatFiles ()
 	subprocess.call( 'ffmpeg -f concat -i l.txt -i brandVideos.png -filter_complex overlay=x=10:y=10 -c:v libx264 -preset slow -crf 18 -pix_fmt yuv420p -y ' + out_file , shell=True )
-
+	# Remove the *.ts files
+	searchForConcatFilesAndRemove ()	
 	# Run a preview of the video
-	subprocess.call( 'mplayer %s'  % ( out_file ) , shell=True )
+	subprocess.call( 'mplayer -loop 0 %s'  % ( out_file ) , shell=True )
 
 
 if ( sys.argv[1] == "-c2"):
 	print ("*** Concat Videos Youtube Branding Remove Audio ***")
-	subprocess.call( 'ffmpeg -f concat -i l.txt -i cornerFinal.png -filter_complex overlay=x=0:y=0 -c:v libx264 -preset slow -crf 18 -pix_fmt yuv420p -an -y ' + out_file , shell=True )
-
+	searchForConcatFiles ()
+	subprocess.call( 'ffmpeg -f concat -i l.txt -i cornerFinalBlack.png -filter_complex overlay=x=0:y=0 -c:v libx264 -preset slow -crf 18 -pix_fmt yuv420p -an -y ' + out_file , shell=True )
+	# Remove the *.ts files
+	searchForConcatFilesAndRemove ()	
 	# Run a preview of the video
-	subprocess.call( 'mplayer %s'  % ( out_file ) , shell=True )
+	subprocess.call( 'mplayer -loop 0 %s'  % ( out_file ) , shell=True )
 
 
 #] Combine Video and Audio [
@@ -228,7 +244,7 @@ if ( sys.argv[1] == "-c3"):
 
 if ( sys.argv[1] == "-e1"):
 	print ("*** Slow Motion ***")
-	ffmpeg_command = '-ss %s -to %s -c:v libx264 -preset slow -filter_complex "setpts=%s*PTS" -crf 0 -preset ultrafast -c:a libmp3lame -b:a 320k -y' % ( sys.argv[3], media_duration, sys.argv[5]  )
+	ffmpeg_command = '-c:v libx264 -preset slow -filter_complex "setpts=%s*PTS" -crf 0 -preset ultrafast -c:a libmp3lame -b:a 320k -y' % ( sys.argv[3]  )
 	useFFmpegClass()
 
 if ( sys.argv[1] == "-e2"):
@@ -297,6 +313,11 @@ if ( sys.argv[1] == "-e12"):
 	#run('ffmpeg -loop 1 -i %s -i %s -c:v libx264 -preset slow -crf 18 -c:a copy -pix_fmt yuv420p -movflags +faststart -y -shortest %s' % ( video_file, sys.argv[3], out_file ), stdout=PIPE, stderr=PIPE, universal_newlines=True, shell=True)
 	subprocess.call( 'ffmpeg -loop 1 -i %s -i %s -c:v libx264 -preset slow -crf 18 -c:a copy -pix_fmt yuv420p -movflags +faststart -y -shortest %s' % ( video_file, sys.argv[3], out_file ) , shell=True )
 
+if ( sys.argv[1] == "-e13"):
+	print ("*** Turn Image Into Video ***")
+	run('ffmpeg -loop 1 -framerate 30000/1001 -i %s -c:v libx264 -profile:v baseline -t %s -pix_fmt yuvj420p -y %s' % ( video_file, sys.argv[3], out_file ), stdout=PIPE, stderr=PIPE, universal_newlines=True, shell=True)
+	subprocess.call( 'mplayer %s -loop 0'  % ( out_file ) , shell=True )
+
 if ( sys.argv[1] == "-a1"):
 	print ("*** Audio Volume ***")
 	ffmpeg_command = '-af "volume=%s" -y' % ( sys.argv[3] )
@@ -305,16 +326,30 @@ if ( sys.argv[1] == "-a1"):
 #[ Add caption to a photo ]
 
 if ( sys.argv[1] == "-p1"):
-	print ("*** Add Caption To A Photo ***")
+	print ("*** Caption To A Photo ***")
 	subprocess.call( "convert %s -fill white -stroke none -font %s  -pointsize 30 -gravity NorthWest -annotate 0 '%s' %s" % ( video_file, sys.argv[3], sys.argv[4], out_file ) , shell=True )
+	run('display %s' % ( out_file), stdout=PIPE, stderr=PIPE, universal_newlines=True, shell=True)
 
 if ( sys.argv[1] == "-p2"):
+	print ("*** Caption From temp.txt ***")
+	#print ( 'convert -background %s -fill %s -font %s -size %s caption:"$(cat ./temp.txt)" -bordercolor %s -border %s %s' % ( sys.argv[2], sys.argv[3], sys.argv[4], sys.argv[5], sys.argv[6], sys.argv[7], out_file ) )
+
+	# Generate random number to store the file as that name
+	# I must do this because convert does not generate a file with the text in it
+	# that matches the users request
+
+	randomFileName =  '%s.png' % ( randint (9000, 22000 ) )
+	print ( randomFileName ) 
+	subprocess.call( 'convert -background %s -fill %s -font %s -size %s caption:"$(cat ./temp.txt)" -bordercolor %s -border %s %s' % ( "'"+sys.argv[2]+"'", "'"+sys.argv[3]+"'", sys.argv[4], sys.argv[5], "'"+sys.argv[6]+"'", sys.argv[7], randomFileName ) , shell=True )
+
+	# resize to match the size passed
+	run('convert %s -resize %s %s' % ( randomFileName, sys.argv[5]+"!", out_file), stdout=PIPE, stderr=PIPE, universal_newlines=True, shell=True)
+	# Delete temp file
+	run('rm %s' % ( randomFileName ), stdout=PIPE, stderr=PIPE, universal_newlines=True, shell=True)
+	# Preview caption
+	run('display %s' % ( out_file), stdout=PIPE, stderr=PIPE, universal_newlines=True, shell=True)
+
+if ( sys.argv[1] == "-p3"):
 	print ("*** Resize Image ***")
 	subprocess.call( "convert %s -resize %s %s" % ( video_file, sys.argv[3], out_file ) , shell=True )
-
-# file 'c1.mov'
-#for x in range (0, 50):
-#	print ("file 'c" + str (x)+"'.mov")
-
-
-
+	run('display %s' % ( out_file), stdout=PIPE, stderr=PIPE, universal_newlines=True, shell=True)
