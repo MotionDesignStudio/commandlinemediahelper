@@ -39,7 +39,7 @@ A Python project to edit video, photo and audio using various system calls mostl
                        Hint :  To use c1 and c2 the filenames must be sequenced like this you can mix and match suffixes c1.xxx, c2.xxx ... c400.xxx 
                        Help :  ./ffmpegHelper.py -h
 
-] Install These [
+] Install These Dependencies [
 
 apt-get install ffmpeg imagemagick mplayer python3-pip
 
