@@ -30,8 +30,8 @@ A Python project to edit video, photo and audio using various system calls mostl
            Resize Arbitrary :  ./ffmpegHelper.py -e10 v.mov 0:34 0:39 416 416 out.mp4
            Resize Arbitrary No Audio :  ./ffmpegHelper.py -e11 v.mov 0:34 0:39 416 416 out.mp4
            Combine Audio With Image :  ./ffmpegHelper.py -e12 i.png a.mp3 out.mp4
-                 Turn Image Into Video :  ./ffmpegHelper.py -e13 i.png 5 out.mp4
-                 Overlay Vid/Img On Video :  ./ffmpegHelper.py -e14 main.mov overlay.mp4 40 40 out.mp4
+      Turn Image Into Video :  ./ffmpegHelper.py -e13 i.png 5 out.mp4
+    Overlay Vid/Img On Video :  ./ffmpegHelper.py -e14 main.mov overlay.mp4 40 40 out.mp4
             Crossfade Video :  ./ffmpegHelper.py -e15 vid1.mov vid2.mov 2 out.mp4
             Turn Image Into Video :  ./ffmpegHelper.py -e13 i.png 5 out.mp4
                Audio Volume :  ./ffmpegHelper.py -a1 a.mp3 2 b.mp3
