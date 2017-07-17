@@ -121,6 +121,8 @@ def displayHelp ():
 	print ( '{:>30} {:<0}'. format ( "Combine Audio With Image : ", './ffmpegHelper.py -e12 i.png a.mp3 out.mp4' ) )
 	print ( '{:>30} {:<0}'. format ( "Turn Image Into Video : ", './ffmpegHelper.py -e13 i.png 5 out.mp4' ) )
 	print ( '{:>30} {:<0}'. format ( "Overlay Vid/Img On Video : ", './ffmpegHelper.py -e14 main.mov overlay.mp4 40 40 out.mp4' ) )
+	print ( '{:>30} {:<0}'. format ( "Crossfade Video : ", './ffmpegHelper.py -e15 vid1.mov vid2.mov 2 out.mp4' ) )
+
 	print ( '{:>30} {:<0}'. format ( "Audio Volume : ", './ffmpegHelper.py -a1 a.mp3 2 b.mp3' ) )
 	print ( '{:>30} {:<0}'. format ( "Caption To A Photo : ", './ffmpegHelper.py -p1 i.png /pathto/font.ttf "Hello World" out.png' ) )
 	print ( '{:>30} {:<0}'. format ( "Caption From temp.txt : ", './ffmpegHelper.py -p2 #123456 "#344567" /home/lex/share/Mo_De_Studio/audio_blog/Bookerly/Bookerly-Bold.ttf "1280x720" "#123456" 10 out.png' ) )
@@ -340,9 +342,6 @@ if ( sys.argv[1] == "-e14"):
 	ffmpeg_command = '-i %s -filter_complex "[0:v][1:v]overlay=x=%s:y=%s:eof_action=pass; [0:a][1:a]amix" -c:v libx264 -preset slow -crf 0 -preset ultrafast -an -y' % ( sys.argv[3], sys.argv[4], sys.argv[5] )
 	#ffmpeg_command = '-i %s -filter_complex "[0:v][1:v]overlay=x=%s:y=%s:eof_action=pass; [0:a][1:a]amix" -c:v libx264 -preset slow -crf 18 -c:a copy -pix_fmt yuv420p -movflags +faststart -an -y' % ( sys.argv[3], sys.argv[4], sys.argv[5] )
 	useFFmpegClass()
-
-
-
 
 if ( sys.argv[1] == "-e15"):
 	print ("*** Crossfade Video  ***")
