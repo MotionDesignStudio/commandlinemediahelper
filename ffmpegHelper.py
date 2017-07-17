@@ -7,6 +7,7 @@ from subprocess import PIPE, run
 import re
 import os
 from random import *
+import json
 
 print ( "Numer arguments : ", len(sys.argv), " arguments.")
 
@@ -19,14 +20,23 @@ media_duration =""
 out_file=""
 
 
+#	getMediaLengthValue = run('ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 -sexagesimal %s' % ( the_file ), stdout=PIPE, stderr=PIPE, universal_newlines=True, shell=True)
+#	return  getMediaLengthValue.stdout 
 
-def getMediaLength( the_file ):
+def getMediaLengthFloatingNumber( the_file ):
 	print ( "CALCULATING %s LENGTH" % ( the_file ) )
 
-	getMediaLengthValue = run('ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 -sexagesimal %s' % ( the_file ), stdout=PIPE, stderr=PIPE, universal_newlines=True, shell=True)
+	getMediaLengthValue = run('ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 %s' % ( the_file ), stdout=PIPE, stderr=PIPE, universal_newlines=True, shell=True)
 	return  getMediaLengthValue.stdout 
 
-# If not help set values
+
+def getMediaInfo( the_file, main_json_node, sub_json_node, info ):
+	print ( "Retreiving info for %s " % ( the_file ) )
+	getMediaLengthValue = run('ffprobe -v quiet -print_format json -show_format -show_streams %s' % ( the_file ), stdout=PIPE, stderr=PIPE, universal_newlines=True, shell=True)
+	#requestedInfo = json.loads (  getMediaLengthValue.stdout )['streams'][0]['width']
+	return json.loads (  getMediaLengthValue.stdout )[ main_json_node ][ sub_json_node ][ info ]
+
+# If no help set values
 #if ( not re.search('-(h|c1)', sys.argv[1] ) ):
 if ( not re.search('-(h)', sys.argv[1] ) ):
 	print ( "Setting values for video_file and out_file"  )
@@ -37,9 +47,9 @@ if ( not re.search('-(h)', sys.argv[1] ) ):
 		media_duration = getMediaLength( video_file ) if sys.argv[4] == "0" else sys.argv[4]
 
 def useFFmpegClass():
-	ff = ffmpy.FFmpeg( 
-		inputs={ video_file : None},	
-		outputs={ out_file : ffmpeg_command } 
+	ff = ffmpy.FFmpeg(
+		inputs={ video_file : None},
+		outputs={ out_file : ffmpeg_command }
 	)
 	print ( ff.cmd )
 	ff.run()
@@ -86,8 +96,9 @@ def displayHelp ():
 	print ( '{:>30} {:<0}'. format ( "Slicing Videos To Time : ", "./ffmpegHelper.py -s1 v.mov 0:34 0:39 out.mov" ) )
 	print ( '{:>30} {:<0}'. format ( "Slicing Videos To Range : ", "./ffmpegHelper.py -s2 v.mov 0:34 0:39 out.mov" ) )
 	print ( '{:>30} {:<0}'. format ( "Instagram Without Resize : ", "./ffmpegHelper.py -i1 v.mov 0:34 0:39 720:720:300:0 out.mp4" ) )
-	print ( '{:>30} {:<0}'. format ( "Instagram With Resize : ", "./ffmpegHelper.py -i2 v.mov 0:34 0:39 720:720:300:0 out.mp4" ) )
-	print ( '{:>30} {:<0}'. format ( "Almost Lossless With Resize : ", "./ffmpegHelper.py -i3 v.mov 0:34 0:39 720:720:300:0 out.mp4" ) )
+	print ( '{:>30} {:<0}'. format ( "Instagram -W- Resize No Aud : ", "./ffmpegHelper.py -i2 v.mov 0:34 0:39 720:720:300:0 out.mp4" ) )
+	print ( '{:>30} {:<0}'. format ( "Almost Lossless -W- Resize : ", "./ffmpegHelper.py -i3 v.mov 0:34 0:39 720:720:300:0 out.mp4" ) )
+	print ( '{:>30} {:<0}'. format ( "Instagram Without Resize : ", "./ffmpegHelper.py -i4 v.mov 0:34 0:39 720:720:300:0 out.mp4" ) )
 	print ( '{:>30} {:<0}'. format ( "YouTube Audio Removed : ", "./ffmpegHelper.py -y1 v.mov 0:34 0:39 out.mp4" ) )
 	print ( '{:>30} {:<0}'. format ( "YouTube : ", "./ffmpegHelper.py -y2 v.mov 0:34 0:39 out.mp4" ) )
 	print ( '{:>30} {:<0}'. format ( "Concat Videos : ", "./ffmpegHelper.py -c1 out.mp4" ) )
@@ -109,6 +120,7 @@ def displayHelp ():
 	print ( '{:>30} {:<0}'. format ( "Resize Arbitrary No Audio : ", './ffmpegHelper.py -e11 v.mov 0:34 0:39 416 416 out.mp4' ) )
 	print ( '{:>30} {:<0}'. format ( "Combine Audio With Image : ", './ffmpegHelper.py -e12 i.png a.mp3 out.mp4' ) )
 	print ( '{:>30} {:<0}'. format ( "Turn Image Into Video : ", './ffmpegHelper.py -e13 i.png 5 out.mp4' ) )
+	print ( '{:>30} {:<0}'. format ( "Overlay Vid/Img On Video : ", './ffmpegHelper.py -e14 main.mov overlay.mp4 40 40 out.mp4' ) )
 	print ( '{:>30} {:<0}'. format ( "Audio Volume : ", './ffmpegHelper.py -a1 a.mp3 2 b.mp3' ) )
 	print ( '{:>30} {:<0}'. format ( "Caption To A Photo : ", './ffmpegHelper.py -p1 i.png /pathto/font.ttf "Hello World" out.png' ) )
 	print ( '{:>30} {:<0}'. format ( "Caption From temp.txt : ", './ffmpegHelper.py -p2 #123456 "#344567" /home/lex/share/Mo_De_Studio/audio_blog/Bookerly/Bookerly-Bold.ttf "1280x720" "#123456" 10 out.png' ) )
@@ -144,7 +156,7 @@ if ( sys.argv[1] == "-s3"):
 
 if ( sys.argv[1] == "-i1"):
 	crop_value= sys.argv[5]
-	print ("*** For Instagram Without Resize ***")
+	print ("*** For Instagram Without Resize No Audio ***")
 	ffmpeg_command = "-i brandVideos.png -ss " + sys.argv[3] +" -t " + media_duration + " -codec:v libx264 "+ ' -filter_complex "crop=' + crop_value +',overlay=x=10:y=10" ' +" -profile:v baseline -preset slow -pix_fmt yuv420p -b:v 3500k -threads 0 -an -y"
 	useFFmpegClass()
 
@@ -156,21 +168,27 @@ if ( sys.argv[1] == "-i2"):
 	ffmpeg_command = "-i brandVideos.png -ss " + sys.argv[3] +" -to " + media_duration + " -codec:v libx264 "+ ' -filter_complex "crop=' + crop_value +',scale=-1:640,overlay=x=10:y=10" ' +" -profile:v baseline -preset slow -pix_fmt yuv420p -b:v 3500k -threads 0 -an -y"
 	useFFmpegClass()
 
+if ( sys.argv[1] == "-i3"):
+	crop_value= sys.argv[5]
+	print ("*** For Instagram Without Resize ***")
+	ffmpeg_command = "-i brandVideos.png -ss " + sys.argv[3] +" -t " + media_duration + " -codec:v libx264 "+ ' -filter_complex "crop=' + crop_value +',overlay=x=10:y=10" ' +" -profile:v baseline -preset slow -pix_fmt yuv420p -b:v 3500k -threads 0 -y"
+	useFFmpegClass()
+
 # ] Almost Lossless [
 
 # ffmpeg -i MVI_9632.MOV -i brandVideos.png -ss 00:00:12.0 -t 00:00:21.0 -codec:v libx264 -filter_complex "crop=720:720:220:0,scale=-1:640,overlay=x=10:y=10" -crf 0 -preset ultrafast -c:a libmp3lame -b:a 320k -an -y s1.mp4
 
-if ( sys.argv[1] == "-i3"):
+if ( sys.argv[1] == "-i4"):
 	crop_value= sys.argv[5]
 	print ("*** Almost Lossless With Resize ***")
-	ffmpeg_command = "-i brandVideos.png -ss " + sys.argv[3] +" -to " + media_duration + " -codec:v libx264 "+ ' -filter_complex "crop=' + crop_value +',scale=-1:640,overlay=x=10:y=10" ' +" -crf 0 -preset ultrafast -c:a libmp3lame -b:a 320k -an -y"
+	ffmpeg_command = "-i brandVideos.png -ss " + sys.argv[3] +" -to " + media_duration + " -codec:v libx264 "+ ' -filter_complex "crop=' + crop_value +',overlay=x=10:y=10" ' +" -profile:v baseline -preset slow -pix_fmt yuv420p -b:v 3500k -threads 0 -y"
 	useFFmpegClass()
 
 # ] YouTube [
 
 if ( sys.argv[1] == "-y1"):
 	print ("*** YouTube and Other Video Sharing Sites Audio Removed ***")
-	ffmpeg_command = "-i cornerFinalBlack.png -ss " + sys.argv[3] +" -to " + media_duration + ' -filter_complex "overlay=x=0:y=0" ' + " -c:v libx264 -preset slow -crf 18 -pix_fmt yuv420p -an -movflags +faststart -y"
+	ffmpeg_command = "-i cornerFinalBlack.png -ss " + sys.argvoo[3] +" -to " + media_duration + ' -filter_complex "overlay=x=0:y=0" ' + " -c:v libx264 -preset slow -crf 18 -pix_fmt yuv420p -an -movflags +faststart -y"
 	useFFmpegClass()
 
 # ] Audio Intact [
@@ -307,16 +325,39 @@ if ( sys.argv[1] == "-e11"):
 	ffmpeg_command = '-ss %s -to %s -c:v libx264 -preset slow -filter_complex "scale=%s:%s" -crf 0 -preset ultrafast -c:a libmp3lame -b:a 320k -an -y' % ( sys.argv[3], media_duration, sys.argv[5], sys.argv[6] )
 	useFFmpegClass()
 
-# ffmpeg -loop 1 -i Lovelight.png -i a.mp3 -c:v libx264 -preset slow -crf 18 -c:a copy -pix_fmt yuv420p -movflags +faststart -y -shortest out.mp4
 if ( sys.argv[1] == "-e12"):
 	print ("*** Combine Audio With Image ***")
-	#run('ffmpeg -loop 1 -i %s -i %s -c:v libx264 -preset slow -crf 18 -c:a copy -pix_fmt yuv420p -movflags +faststart -y -shortest %s' % ( video_file, sys.argv[3], out_file ), stdout=PIPE, stderr=PIPE, universal_newlines=True, shell=True)
 	subprocess.call( 'ffmpeg -loop 1 -i %s -i %s -c:v libx264 -preset slow -crf 18 -c:a copy -pix_fmt yuv420p -movflags +faststart -y -shortest %s' % ( video_file, sys.argv[3], out_file ) , shell=True )
 
 if ( sys.argv[1] == "-e13"):
 	print ("*** Turn Image Into Video ***")
 	run('ffmpeg -loop 1 -framerate 30000/1001 -i %s -c:v libx264 -profile:v baseline -t %s -pix_fmt yuvj420p -y %s' % ( video_file, sys.argv[3], out_file ), stdout=PIPE, stderr=PIPE, universal_newlines=True, shell=True)
 	subprocess.call( 'mplayer %s -loop 0'  % ( out_file ) , shell=True )
+
+
+if ( sys.argv[1] == "-e14"):
+	print ("*** Overlay Vid/Img On Video  ***")
+	ffmpeg_command = '-i %s -filter_complex "[0:v][1:v]overlay=x=%s:y=%s:eof_action=pass; [0:a][1:a]amix" -c:v libx264 -preset slow -crf 0 -preset ultrafast -an -y' % ( sys.argv[3], sys.argv[4], sys.argv[5] )
+	#ffmpeg_command = '-i %s -filter_complex "[0:v][1:v]overlay=x=%s:y=%s:eof_action=pass; [0:a][1:a]amix" -c:v libx264 -preset slow -crf 18 -c:a copy -pix_fmt yuv420p -movflags +faststart -an -y' % ( sys.argv[3], sys.argv[4], sys.argv[5] )
+	useFFmpegClass()
+
+
+
+
+if ( sys.argv[1] == "-e15"):
+	print ("*** Crossfade Video  ***")
+	#print ( getMediaLengthWidth ( video_file ) )
+	W = getMediaInfo ( video_file, 'streams', 0, 'width' )
+	H = getMediaInfo ( video_file, 'streams', 0, 'height' )
+	v1Length = float ( getMediaInfo ( video_file, 'streams', 1, 'duration' ))
+	sumOfSpecialAffect = v1Length  + float ( getMediaInfo ( sys.argv[3], 'streams', 1, 'duration' ) ) - float ( sys.argv[4] )
+	FadeDuration = sys.argv[4]
+	#print ( sumOfSpecialAffect )
+	ffmpeg_command = '-i %s -filter_complex "color=black:%sx%s:d=%s[base]; [0:v]setpts=PTS-STARTPTS[v0]; [1:v]format=yuva420p,fade=in:st=0:d=%s:alpha=1, setpts=PTS-STARTPTS+((%s-%s)/TB)[v1]; [base][v0]overlay[tmp]; [tmp][v1]overlay,format=yuv420p[fv]; [0:a][1:a]acrossfade=d=%s[fa] " -map [fv] -map [fa] -c:v libx264 -preset slow -crf 18 -pix_fmt yuv420p -movflags +faststart -y' % ( sys.argv[3], W, H, sumOfSpecialAffect, FadeDuration, v1Length, FadeDuration, FadeDuration )
+	useFFmpegClass()
+
+
+
 
 if ( sys.argv[1] == "-a1"):
 	print ("*** Audio Volume ***")
