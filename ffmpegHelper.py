@@ -19,10 +19,6 @@ crop_value=""
 media_duration =""
 out_file=""
 
-
-#	getMediaLengthValue = run('ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 -sexagesimal %s' % ( the_file ), stdout=PIPE, stderr=PIPE, universal_newlines=True, shell=True)
-#	return  getMediaLengthValue.stdout 
-
 def getMediaLengthFloatingNumber( the_file ):
 	print ( "CALCULATING %s LENGTH" % ( the_file ) )
 
@@ -36,12 +32,13 @@ def getMediaInfo( the_file, main_json_node, sub_json_node, info ):
 	#requestedInfo = json.loads (  getMediaLengthValue.stdout )['streams'][0]['width']
 	return json.loads (  getMediaLengthValue.stdout )[ main_json_node ][ sub_json_node ][ info ]
 
+# I need to use this for the 'format' node to check if file has an audio stream
+# it also contain info on the play duration of the file.
 def getMediaAudioInfo( the_file, main_json_node, sub_json_node ):
 	print ( "Retreiving info for %s " % ( the_file ) )
 	getMediaLengthValue = run('ffprobe -v quiet -print_format json -show_format -show_streams %s' % ( the_file ), stdout=PIPE, stderr=PIPE, universal_newlines=True, shell=True)
 	#requestedInfo = json.loads (  getMediaLengthValue.stdout )['format']['nb_streams']
 	return json.loads (  getMediaLengthValue.stdout )[ main_json_node ][ sub_json_node ]
-	#return json.loads (  getMediaLengthValue.stdout )['format']['nb_streams']
 
 # If no help set values
 #if ( not re.search('-(h|c1)', sys.argv[1] ) ):
@@ -49,9 +46,7 @@ if ( not re.search('-(h)', sys.argv[1] ) ):
 	print ( "Setting values for video_file and out_file"  )
 	video_file=sys.argv[2]
 	out_file=sys.argv[ len(sys.argv) - 1 ] # The last value passed to the code
-	# media_duration = getMediaLength( video_file ) if sys.argv[4] == "0" else sys.argv[4]
-	if ( not re.search('-(c1|c2|e1)', sys.argv[1] ) ): 
-		#media_duration = getMediaLength( video_file ) if sys.argv[4] == "0" else sys.argv[4]
+	if ( not re.search('^-(c1$|c2$|c4$|e1$)', sys.argv[1] ) ): 
 		media_duration = getMediaAudioInfo( video_file, 'format', 'duration' ) if sys.argv[4] == "0" else sys.argv[4]
 
 def useFFmpegClass():
@@ -120,15 +115,15 @@ def displayHelp ():
 	print ( '{:>30} {:<0}'. format ( "Black And White : ", './ffmpegHelper.py -e3 v.mov 0:34 0:39 out.mp4' ) )
 	print ( '{:>30} {:<0}'. format ( "Black And White No Audio : ", './ffmpegHelper.py -e4 v.mov 0:34 0:39 out.mp4' ) )
 	print ( '{:>30} {:<0}'. format ( "Extract Single Frame : ", './ffmpegHelper.py -e5 v.mov 0:34 image.png' ) )
-	print ( '{:>30} {:<0}'. format ( "Scale Ratio Width : ", './ffmpegHelper.py -e6 v.mov 0:34 0:39 out.mp4' ) )
-	print ( '{:>30} {:<0}'. format ( "Scale Ratio Width No Audio : ", './ffmpegHelper.py -e7 v.mov 0:34 0:39 out.mp4' ) )
+	print ( '{:>30} {:<0}'. format ( "Scale Ratio Width : ", './ffmpegHelper.py -e6 v.mov 0:34 0:39 416 out.mp4' ) )
+	print ( '{:>30} {:<0}'. format ( "Scale Ratio Width No Audio : ", './ffmpegHelper.py -e7 v.mov 0:34 0:39 416 out.mp4' ) )
 	print ( '{:>30} {:<0}'. format ( "Scale Ratio Height : ", './ffmpegHelper.py -e8 v.mov 0:34 0:39 416 out.mp4' ) )
 	print ( '{:>30} {:<0}'. format ( "Scale Ratio Height No Audio : ", './ffmpegHelper.py -e9 v.mov 0:34 0:39 416 out.mp4' ) )
 	print ( '{:>30} {:<0}'. format ( "Resize Arbitrary : ", './ffmpegHelper.py -e10 v.mov 0:34 0:39 416 416 out.mp4' ) )
 	print ( '{:>30} {:<0}'. format ( "Resize Arbitrary No Audio : ", './ffmpegHelper.py -e11 v.mov 0:34 0:39 416 416 out.mp4' ) )
 	print ( '{:>30} {:<0}'. format ( "Combine Audio With Image : ", './ffmpegHelper.py -e12 i.png a.mp3 out.mp4' ) )
 	print ( '{:>30} {:<0}'. format ( "Turn Image Into Video : ", './ffmpegHelper.py -e13 i.png 5 out.mp4' ) )
-	print ( '{:>30} {:<0}'. format ( "Overlay Vid/Img On Video : ", './ffmpegHelper.py -e14 main.mov overlay.mp4 40 40 out.mp4' ) )
+	print ( '{:>30} {:<0}'. format ( "Overlay Vid or Img On Video : ", './ffmpegHelper.py -e14 main.mov overlay.mp4 40 40 out.mp4' ) )
 	print ( '{:>30} {:<0}'. format ( "Crossfade Video : ", './ffmpegHelper.py -e15 vid1.mov vid2.mov 2 out.mp4' ) )
 	print ( '{:>30} {:<0}'. format ( "Side By Side Video : ", './ffmpegHelper.py -e16 left.mov right.mov out.mp4' ) )
 
@@ -225,7 +220,8 @@ if ( sys.argv[1] == "-t1"):
 
 if ( sys.argv[1] == "-t2"):
 	print ("*** Overlay Text To Video ***")
-	ffmpeg_command = '-filter_complex "drawtext=fontfile=%s:text=%s:fontcolor=0xFFFFFFFF:fontsize=36:x=20:y=10: #shadowcolor=0x000000EE:shadowx=2:shadowy=2" -c:v libx264 -preset slow -crf 18 -c:a copy -pix_fmt yuv420p -y' % ( media_duration, sys.argv[3] )
+	#ffmpeg_command = '-filter_complex "drawtext=fontfile=%s:text=%s:fontcolor=0xFFFFFFFF:fontsize=%s:x=20:y=10: #shadowcolor=0x000000EE:shadowx=2:shadowy=2" -c:v libx264 -preset slow -crf 18 -c:a copy -pix_fmt yuv420p -y' % ( sys.argv[4], sys.argv[3], sys.argv[5] )
+	ffmpeg_command = '-filter_complex "drawtext=font=%s:text=%s:fontcolor=0x000000FF:fontsize=%s:x=20:y=10: #shadowcolor=0x000000EE:shadowx=2:shadowy=2" -c:v libx264 -preset slow -crf 18 -c:a copy -pix_fmt yuv420p -y' % ( sys.argv[4], sys.argv[3], sys.argv[5] )
 	useFFmpegClass()
 
 # Previewing A File
@@ -240,7 +236,7 @@ if ( sys.argv[1] == "-p"):
 # ffmpeg -f concat -i l.txt -i brandVideos.png -codec:v libx264 -filter_complex "crop=720:720:250:0,scale=-1:640,overlay=x=10:y=10" -profile:v baseline -preset slow -pix_fmt yuv420p -b:v 3500k -threads 0 -an -y s1.mp4
 
 if ( sys.argv[1] == "-c1"):
-	print ("*** Concat Videos Remove Audio ***")
+	print ("*** Concat Videos  ***")
 	searchForConcatFiles ()
 	subprocess.call( 'ffmpeg -f concat -i l.txt -i brandVideos.png -filter_complex overlay=x=10:y=10 -c:v libx264 -preset slow -crf 18 -pix_fmt yuv420p -y ' + out_file , shell=True )
 	# Remove the *.ts files
@@ -265,8 +261,17 @@ if ( sys.argv[1] == "-c2"):
 if ( sys.argv[1] == "-c3"):
 	print ("*** Combine Video and Audio ***")
 	ffmpeg_command = '-i %s -acodec copy -vcodec copy -map 0:v -map 1:a -y' % ( sys.argv[3] )
-
 	useFFmpegClass()
+
+if ( sys.argv[1] == "-c4"):
+	print ("*** Concat Videos No Branding ***")
+	searchForConcatFiles ()
+	subprocess.call( 'ffmpeg -f concat -i l.txt -c:a aac -c:v libx264 -preset slow -crf 18 -pix_fmt yuv420p -y ' + out_file , shell=True )
+	#subprocess.call( 'ffmpeg -f concat -i l.txt -c:a copy -c:v libx264 -preset slow -crf 18 -pix_fmt yuv420p -y ' + out_file , shell=True )
+	# Remove the *.ts files
+	searchForConcatFilesAndRemove ()	
+	# Run a preview of the video
+	subprocess.call( 'mplayer -loop 0 %s'  % ( out_file ) , shell=True )
 
 # ] Slow Motion [
 # ffmpeg -i s1.MOV -c copy -filter:v "setpts=2.5*PTS" -y s1s.MOV
@@ -347,7 +352,7 @@ if ( sys.argv[1] == "-e13"):
 
 
 if ( sys.argv[1] == "-e14"):
-	print ("*** Overlay Vid/Img On Video  ***")
+	print ("*** Overlay Vid or Img On Video  ***")
 	vid1hasAudio = getMediaAudioInfo ( video_file, 'format', 'nb_streams' )
 	vid2hasAudio = getMediaAudioInfo ( sys.argv[3], 'format', 'nb_streams' )
 
@@ -368,10 +373,21 @@ if ( sys.argv[1] == "-e15"):
 	ffmpeg_command = '-i %s -filter_complex "color=black:%sx%s:d=%s[base]; [0:v]setpts=PTS-STARTPTS[v0]; [1:v]format=yuva420p,fade=in:st=0:d=%s:alpha=1, setpts=PTS-STARTPTS+((%s-%s)/TB)[v1]; [base][v0]overlay[tmp]; [tmp][v1]overlay,format=yuv420p[fv]; [0:a][1:a]acrossfade=d=%s[fa] " -map [fv] -map [fa] -c:v libx264 -preset slow -crf 18 -pix_fmt yuv420p -movflags +faststart -y' % ( sys.argv[3], W, H, sumOfSpecialAffect, FadeDuration, v1Length, FadeDuration, FadeDuration )
 	useFFmpegClass()
 
+
+
+
 if ( sys.argv[1] == "-e16"):
 	print ("*** Side By Side Video  ***")
-	ffmpeg_command = '-i %s -filter_complex "[0:v]setpts=PTS-STARTPTS, pad=iw*2:ih[bg]; [1:v]setpts=PTS-STARTPTS[fg]; [bg][fg]overlay=w; [0:a][1:a]amix" -y' % ( sys.argv[3] )
+	# Check that both streams have audio if not remove the mix audio from the ffmpeg command
+	vid1hasAudio = getMediaAudioInfo ( video_file, 'format', 'nb_streams' )
+	vid2hasAudio = getMediaAudioInfo ( sys.argv[3], 'format', 'nb_streams' )
+
+	if ( vid1hasAudio >1 and vid2hasAudio >1):
+		ffmpeg_command = '-i %s -filter_complex "[0:v]setpts=PTS-STARTPTS, pad=iw*2:ih[bg]; [1:v]setpts=PTS-STARTPTS[fg]; [bg][fg]overlay=w; [0:a][1:a]amix" -y' % ( sys.argv[3] )
+	else:
+		ffmpeg_command = '-i %s -filter_complex "[0:v]setpts=PTS-STARTPTS, pad=iw*2:ih[bg]; [1:v]setpts=PTS-STARTPTS[fg]; [bg][fg]overlay=w" -y' % ( sys.argv[3] )
 	useFFmpegClass()
+
 
 if ( sys.argv[1] == "-e17"):
 	crop_value= sys.argv[5]
@@ -379,6 +395,15 @@ if ( sys.argv[1] == "-e17"):
 	#ffmpeg_command = "-ss " + sys.argv[3] +" -t " + media_duration + " -codec:v libx264 "+ ' -filter_complex "crop=' + crop_value +'" ' +" -profile:v baseline -preset slow -pix_fmt yuv420p -b:v 3500k -threads 0 -y"
 	ffmpeg_command = '-ss %s -t %s -codec:v libx264 -filter_complex "crop=%s" -profile:v baseline -preset slow -pix_fmt yuv420p -b:v 3500k -threads 0 -y ' % ( sys.argv[3], sys.argv[4], sys.argv[5] )
 	useFFmpegClass()
+
+if ( sys.argv[1] == "-e18"):
+	crop_value= sys.argv[5]
+	print ("*** Croping Video ***")
+	print  ( "media_duration :: " + media_duration )
+	ffmpeg_command = "-ss " + sys.argv[3] +" -to " + media_duration + " -codec:v libx264 "+ ' -filter_complex "crop=' + crop_value +'" ' +" -profile:v baseline -preset slow -pix_fmt yuv420p -b:v 3500k -threads 0 -y"
+	useFFmpegClass()
+
+
 
 
 if ( sys.argv[1] == "-a1"):
