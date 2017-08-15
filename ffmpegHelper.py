@@ -98,17 +98,17 @@ def displayHelp ():
 	print ( '{:>30} {:<0}'. format ( "Examples :", "Videos | Audio | Photos\n" ) )
 	print ( '{:>30} {:<0}'. format ( "Slicing Videos To Time : ", "./ffmpegHelper.py -s1 v.mov 0:34 0:39 out.mov" ) )
 	print ( '{:>30} {:<0}'. format ( "Slicing Videos To Range : ", "./ffmpegHelper.py -s2 v.mov 0:34 0:39 out.mov" ) )
-	print ( '{:>30} {:<0}'. format ( "Instagram Without Resize : ", "./ffmpegHelper.py -i1 v.mov 0:34 0:39 720:720:300:0 out.mp4" ) )
-	print ( '{:>30} {:<0}'. format ( "Instagram -W- Resize No Aud : ", "./ffmpegHelper.py -i2 v.mov 0:34 0:39 720:720:300:0 out.mp4" ) )
+	print ( '{:>30} {:<0}'. format ( "IG Without Resize No Aud: ", "./ffmpegHelper.py -i1 v.mov 0:34 0:39 720:720:300:0 out.mp4" ) )
+	print ( '{:>30} {:<0}'. format ( "IG -W- Resize No Aud : ", "./ffmpegHelper.py -i2 v.mov 0:34 0:39 720:720:300:0 out.mp4" ) )
 	print ( '{:>30} {:<0}'. format ( "Almost Lossless -W- Resize : ", "./ffmpegHelper.py -i3 v.mov 0:34 0:39 720:720:300:0 out.mp4" ) )
-	print ( '{:>30} {:<0}'. format ( "Instagram Without Resize : ", "./ffmpegHelper.py -i4 v.mov 0:34 0:39 720:720:300:0 out.mp4" ) )
+	print ( '{:>30} {:<0}'. format ( "IG Without Resize : ", "./ffmpegHelper.py -i4 v.mov 0:34 0:39 720:720:300:0 out.mp4" ) )
 	print ( '{:>30} {:<0}'. format ( "YouTube Audio Removed : ", "./ffmpegHelper.py -y1 v.mov 0:34 0:39 out.mp4" ) )
 	print ( '{:>30} {:<0}'. format ( "YouTube : ", "./ffmpegHelper.py -y2 v.mov 0:34 0:39 out.mp4" ) )
-	print ( '{:>30} {:<0}'. format ( "Concat Videos : ", "./ffmpegHelper.py -c1 out.mp4" ) )
+	print ( '{:>30} {:<0}'. format ( "Concat Videos IG Brand : ", "./ffmpegHelper.py -c1 out.mp4" ) )
 	print ( '{:>30} {:<0}'. format ( "Concat Videos Youtube BRND : ", "./ffmpegHelper.py -c2 out.mp4" ) )
 	print ( '{:>30} {:<0}'. format ( "Combine Video and Audio : ", "./ffmpegHelper.py -c3 v.mov out.mp3 out.mkv" ) )
 	print ( '{:>30} {:<0}'. format ( "Overlay Text/Image 2 Video : ", './ffmpegHelper.py -t1 out.mov "Overlayed Text" /pathto/font.ttf out.mp4' ) )
-	print ( '{:>30} {:<0}'. format ( "Overlay Text To Video : ", './ffmpegHelper.py -t2 text.mov "Overlayed Text" /pathto/font.ttf out.mp4' ) )
+	print ( '{:>30} {:<0}'. format ( "Overlay Text To Video : ", './ffmpegHelper.py -t2 text.mov "Overlayed Text" fontName 20 d90000 out.mp4' ) )
 	print ( '{:>30} {:<0}'. format ( "Preview Video : ", './ffmpegHelper.py -p v.mov 0:34 0:39 720:720:300:0' ) )
 	print ( '{:>30} {:<0}'. format ( "Slow Motion : ", './ffmpegHelper.py -e1 v.mov 4 out.mp4' ) )
 	print ( '{:>30} {:<0}'. format ( "Slow Motion No Audio : ", './ffmpegHelper.py -e2 v.mov 0:34 0:39 2.5 out.mp4' ) )
@@ -134,6 +134,7 @@ def displayHelp ():
 
 	print ( '{:>30} {:<0}'. format ( "Hint : ", "Use 0 to choose media length example : ./ffmpegHelper.py -p v.mov 0:34 0 720:720:300:0" ) )
 	print ( '{:>30} {:<0}'. format ( "Hint : ", "To use c1 and c2 the filenames must be sequenced like this you can mix and match suffixes c1.xxx, c2.xxx ... c400.xxx " ) )
+	print ( '{:>30} {:<0}'. format ( "Hint : ", "IG Means Instagram" ) )
 	print ( '{:>30} {:<0}'. format ( "Help : ", "./ffmpegHelper.py -h" ) )
 
 if ( sys.argv[1] == "-h"):
@@ -163,7 +164,7 @@ if ( sys.argv[1] == "-s3"):
 if ( sys.argv[1] == "-i1"):
 	crop_value= sys.argv[5]
 	print ("*** For Instagram Without Resize No Audio ***")
-	ffmpeg_command = "-i brandVideos.png -ss " + sys.argv[3] +" -t " + media_duration + " -codec:v libx264 "+ ' -filter_complex "crop=' + crop_value +',overlay=x=10:y=10" ' +" -profile:v baseline -preset slow -pix_fmt yuv420p -b:v 3500k -threads 0 -an -y"
+	ffmpeg_command = "-i brandVideos.png -ss " + sys.argv[3] +" -to " + media_duration + " -codec:v libx264 "+ ' -filter_complex "crop=' + crop_value +',overlay=x=10:y=10" ' +" -profile:v baseline -preset slow -pix_fmt yuv420p -b:v 3500k -threads 0 -an -y"
 	useFFmpegClass()
 
 # ] For Instagram II [
@@ -221,7 +222,8 @@ if ( sys.argv[1] == "-t1"):
 if ( sys.argv[1] == "-t2"):
 	print ("*** Overlay Text To Video ***")
 	#ffmpeg_command = '-filter_complex "drawtext=fontfile=%s:text=%s:fontcolor=0xFFFFFFFF:fontsize=%s:x=20:y=10: #shadowcolor=0x000000EE:shadowx=2:shadowy=2" -c:v libx264 -preset slow -crf 18 -c:a copy -pix_fmt yuv420p -y' % ( sys.argv[4], sys.argv[3], sys.argv[5] )
-	ffmpeg_command = '-filter_complex "drawtext=font=%s:text=%s:fontcolor=0x000000FF:fontsize=%s:x=20:y=10: #shadowcolor=0x000000EE:shadowx=2:shadowy=2" -c:v libx264 -preset slow -crf 18 -c:a copy -pix_fmt yuv420p -y' % ( sys.argv[4], sys.argv[3], sys.argv[5] )
+	#ffmpeg_command = '-filter_complex "drawtext=font=%s:text=%s:fontcolor=0x000000FF:fontsize=%s:x=20:y=10: #shadowcolor=0x000000EE:shadowx=2:shadowy=2" -c:v libx264 -preset slow -crf 18 -c:a copy -pix_fmt yuv420p -y' % ( sys.argv[4], sys.argv[3], sys.argv[5] )
+	ffmpeg_command = '-filter_complex "drawtext=font=%s:text=%s:fontcolor=0x%sFF:fontsize=%s:x=20:y=10: #shadowcolor=0x%sEE:shadowx=2:shadowy=2" -c:v libx264 -preset slow -crf 18 -c:a copy -pix_fmt yuv420p -y' % ( sys.argv[4], sys.argv[3], sys.argv[6], sys.argv[5], sys.argv[6] )
 	useFFmpegClass()
 
 # Previewing A File
@@ -236,7 +238,7 @@ if ( sys.argv[1] == "-p"):
 # ffmpeg -f concat -i l.txt -i brandVideos.png -codec:v libx264 -filter_complex "crop=720:720:250:0,scale=-1:640,overlay=x=10:y=10" -profile:v baseline -preset slow -pix_fmt yuv420p -b:v 3500k -threads 0 -an -y s1.mp4
 
 if ( sys.argv[1] == "-c1"):
-	print ("*** Concat Videos  ***")
+	print ("*** Concat Videos IG Brand  ***")
 	searchForConcatFiles ()
 	subprocess.call( 'ffmpeg -f concat -i l.txt -i brandVideos.png -filter_complex overlay=x=10:y=10 -c:v libx264 -preset slow -crf 18 -pix_fmt yuv420p -y ' + out_file , shell=True )
 	# Remove the *.ts files
