@@ -96,9 +96,9 @@ def searchForConcatFilesAndRemove():
 def displayHelp ():
 
 	print ( '{:>30} {:<0}'. format ( "Examples :", "Videos | Audio | Photos\n" ) )
-	print ( '{:>30} {:<0}'. format ( "Slicing Videos To Time : ", "./ffmpegHelper.py -s1 v.mov 0:34 0:39 out.mov" ) )
-	print ( '{:>30} {:<0}'. format ( "Slicing Videos To Range : ", "./ffmpegHelper.py -s2 v.mov 0:34 0:39 out.mov" ) )
-	print ( '{:>30} {:<0}'. format ( "IG Without Resize No Aud: ", "./ffmpegHelper.py -i1 v.mov 0:34 0:39 720:720:300:0 out.mp4" ) )
+	print ( '{:>30} {:<0}'. format ( "Slice Vid 2 Time No Compr. : ", "./ffmpegHelper.py -s1 v.mov 0:34 0:39 out.mov" ) )
+	print ( '{:>30} {:<0}'. format ( "Slice Vid 2 Rnge No Compr. : ", "./ffmpegHelper.py -s2 v.mov 0:34 0:39 out.mov" ) )
+	print ( '{:>30} {:<0}'. format ( "IG Without Resize No Aud : ", "./ffmpegHelper.py -i1 v.mov 0:34 0:39 720:720:300:0 out.mp4" ) )
 	print ( '{:>30} {:<0}'. format ( "IG -W- Resize No Aud : ", "./ffmpegHelper.py -i2 v.mov 0:34 0:39 720:720:300:0 out.mp4" ) )
 	print ( '{:>30} {:<0}'. format ( "Almost Lossless -W- Resize : ", "./ffmpegHelper.py -i3 v.mov 0:34 0:39 720:720:300:0 out.mp4" ) )
 	print ( '{:>30} {:<0}'. format ( "IG Without Resize : ", "./ffmpegHelper.py -i4 v.mov 0:34 0:39 720:720:300:0 out.mp4" ) )
@@ -107,6 +107,7 @@ def displayHelp ():
 	print ( '{:>30} {:<0}'. format ( "Concat Videos IG Brand : ", "./ffmpegHelper.py -c1 out.mp4" ) )
 	print ( '{:>30} {:<0}'. format ( "Concat Videos Youtube BRND : ", "./ffmpegHelper.py -c2 out.mp4" ) )
 	print ( '{:>30} {:<0}'. format ( "Combine Video and Audio : ", "./ffmpegHelper.py -c3 v.mov out.mp3 out.mkv" ) )
+	print ( '{:>30} {:<0}'. format ( "Concat Videos No Branding : ", "./ffmpegHelper.py -c4 out.mkv" ) )
 	print ( '{:>30} {:<0}'. format ( "Overlay Text/Image 2 Video : ", './ffmpegHelper.py -t1 out.mov "Overlayed Text" /pathto/font.ttf out.mp4' ) )
 	print ( '{:>30} {:<0}'. format ( "Overlay Text To Video : ", './ffmpegHelper.py -t2 text.mov "Overlayed Text" fontName 20 d90000 out.mp4' ) )
 	print ( '{:>30} {:<0}'. format ( "Preview Video : ", './ffmpegHelper.py -p v.mov 0:34 0:39 720:720:300:0' ) )
@@ -126,7 +127,9 @@ def displayHelp ():
 	print ( '{:>30} {:<0}'. format ( "Overlay Vid or Img On Video : ", './ffmpegHelper.py -e14 main.mov overlay.mp4 40 40 out.mp4' ) )
 	print ( '{:>30} {:<0}'. format ( "Crossfade Video : ", './ffmpegHelper.py -e15 vid1.mov vid2.mov 2 out.mp4' ) )
 	print ( '{:>30} {:<0}'. format ( "Side By Side Video : ", './ffmpegHelper.py -e16 left.mov right.mov out.mp4' ) )
-
+	print ( '{:>30} {:<0}'. format ( "Cut Out Portion Of Video : ", './ffmpegHelper.py -e17 s.mov 0:06 0 1280:50:0:400 out.mp4' ) )
+	print ( '{:>30} {:<0}'. format ( "Slice Vid Compressed : ", './ffmpegHelper.py -e18 v.mov 0:34 0:39 out.mov' ) )
+	print ( '{:>30} {:<0}'. format ( "Side By Side Video W Border : ", './ffmpegHelper.py -e19 c2.mov c1.mov 1 1 black out.mp4' ) )
 	print ( '{:>30} {:<0}'. format ( "Audio Volume : ", './ffmpegHelper.py -a1 a.mp3 2 b.mp3' ) )
 	print ( '{:>30} {:<0}'. format ( "Caption To A Photo : ", './ffmpegHelper.py -p1 i.png /pathto/font.ttf "Hello World" out.png' ) )
 	print ( '{:>30} {:<0}'. format ( "Caption From temp.txt : ", './ffmpegHelper.py -p2 #123456 "#344567" /home/lex/share/Mo_De_Studio/audio_blog/Bookerly/Bookerly-Bold.ttf "1280x720" "#123456" 10 out.png' ) )
@@ -143,12 +146,12 @@ if ( sys.argv[1] == "-h"):
 # ] Slicing A Video [
 
 if ( sys.argv[1] == "-s1"):
-	print ("*** Slicing Video To Time***")
+	print ("*** Slice Video To Time No Compression***")
 	ffmpeg_command = "-ss %s -to %s -c copy -y" % ( sys.argv[3],  media_duration )
 	useFFmpegClass()
 
 if ( sys.argv[1] == "-s2"):
-	print ("*** Slicing Video Range***")
+	print ("*** Slice Video Range No Compression***")
 	ffmpeg_command = "-ss " + sys.argv[3] + " -c copy -t " + media_duration + " -y"
 	useFFmpegClass()
 
@@ -195,7 +198,7 @@ if ( sys.argv[1] == "-i4"):
 
 if ( sys.argv[1] == "-y1"):
 	print ("*** YouTube and Other Video Sharing Sites Audio Removed ***")
-	ffmpeg_command = "-i cornerFinalBlack.png -ss " + sys.argvoo[3] +" -to " + media_duration + ' -filter_complex "overlay=x=0:y=0" ' + " -c:v libx264 -preset slow -crf 18 -pix_fmt yuv420p -an -movflags +faststart -y"
+	ffmpeg_command = "-i cornerFinalBlack.png -ss " + sys.argv[3] +" -to " + media_duration + ' -filter_complex "overlay=x=0:y=0" ' + " -c:v libx264 -preset slow -crf 18 -pix_fmt yuv420p -an -movflags +faststart -y"
 	useFFmpegClass()
 
 # ] Audio Intact [
@@ -376,8 +379,6 @@ if ( sys.argv[1] == "-e15"):
 	useFFmpegClass()
 
 
-
-
 if ( sys.argv[1] == "-e16"):
 	print ("*** Side By Side Video  ***")
 	# Check that both streams have audio if not remove the mix audio from the ffmpeg command
@@ -406,6 +407,24 @@ if ( sys.argv[1] == "-e18"):
 	useFFmpegClass()
 
 
+if ( sys.argv[1] == "-e19"):
+	print ("*** Side By Side Video With Border ***")
+	# Check that both streams have audio if not remove the mix audio from the ffmpeg command
+	vid1hasAudio = getMediaAudioInfo ( video_file, 'format', 'nb_streams' )
+	vid2hasAudio = getMediaAudioInfo ( sys.argv[3], 'format', 'nb_streams' )
+	w_Left = getMediaInfo ( video_file, 'streams', 0, 'width' )
+	w_Right = getMediaInfo ( sys.argv[3] , 'streams', 0, 'width' )
+	h_Left = getMediaInfo ( video_file, 'streams', 0, 'height' )
+	h_Right = getMediaInfo ( sys.argv[3] , 'streams', 0, 'height' )
+	leftNewWidth = w_Left - int ( sys.argv[4] )
+	rigthNewWidth = w_Right - int ( sys.argv[5] )
+	borderColor =  sys.argv[6]
+
+	if ( vid1hasAudio >1 and vid2hasAudio >1):
+		ffmpeg_command = '-i %s -filter_complex "[0:v]crop=%s:%s, pad=%s:%s:0:0:%s[tmp0]; [1:v]crop=%s:%s, pad=%s:%s:%s:0:%s[tmp1]; [tmp0][tmp1]hstack[v];[0:a][1:a]amerge=inputs=2[a]" -map "[v]" -map "[a]" -ac 2 -y' % ( sys.argv[3], leftNewWidth, h_Left, w_Left, h_Left, borderColor, rigthNewWidth, h_Right, w_Right, h_Right, sys.argv[5], borderColor )
+	else:
+		ffmpeg_command = '-i %s -filter_complex "[0:v]crop=%s:%s, pad=%s:%s:0:0:%s[tmp0]; [1:v]crop=%s:%s, pad=%s:%s:%s:0:%s[tmp1]; [tmp0][tmp1]hstack[v] " -map "[v]" -y' % ( sys.argv[3], leftNewWidth, h_Left, w_Left, h_Left, borderColor, rigthNewWidth, h_Right, w_Right, h_Right, sys.argv[5], borderColor )
+	useFFmpegClass()
 
 
 if ( sys.argv[1] == "-a1"):
