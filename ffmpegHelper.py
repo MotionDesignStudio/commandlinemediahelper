@@ -35,10 +35,14 @@ def getMediaInfo( the_file, main_json_node, sub_json_node, info ):
 # I need to use this for the 'format' node to check if file has an audio stream
 # it also contain info on the play duration of the file.
 def getMediaAudioInfo( the_file, main_json_node, sub_json_node ):
-	print ( "Retreiving info for %s " % ( the_file ) )
+	print ( "Retreiving info for : %s " % ( the_file ) )
 	getMediaLengthValue = run('ffprobe -v quiet -print_format json -show_format -show_streams %s' % ( the_file ), stdout=PIPE, stderr=PIPE, universal_newlines=True, shell=True)
 	#requestedInfo = json.loads (  getMediaLengthValue.stdout )['format']['nb_streams']
-	return json.loads (  getMediaLengthValue.stdout )[ main_json_node ][ sub_json_node ]
+	
+	returnMe = json.loads (  getMediaLengthValue.stdout )[ main_json_node ][ sub_json_node ]
+
+	print ( "info : %s | returned : %s" % ( sub_json_node, returnMe ) )
+	return returnMe
 
 # If no help set values
 #if ( not re.search('-(h|c1)', sys.argv[1] ) ):
@@ -46,7 +50,8 @@ if ( not re.search('-(h)', sys.argv[1] ) ):
 	print ( "Setting values for video_file and out_file"  )
 	video_file=sys.argv[2]
 	out_file=sys.argv[ len(sys.argv) - 1 ] # The last value passed to the code
-	if ( not re.search('^-(c1$|c2$|c4$|e1$)', sys.argv[1] ) ): 
+	if ( not re.search('^-(c1$|c2$|c4$|e1$|lex1$)', sys.argv[1] ) ): 
+		# If the user specifies the length of zero aka 0 as the file length give them back the true length of the video
 		media_duration = getMediaAudioInfo( video_file, 'format', 'duration' ) if sys.argv[4] == "0" else sys.argv[4]
 
 def useFFmpegClass():
@@ -130,6 +135,8 @@ def displayHelp ():
 	print ( '{:>30} {:<0}'. format ( "Cut Out Portion Of Video : ", './ffmpegHelper.py -e17 s.mov 0:06 0 1280:50:0:400 out.mp4' ) )
 	print ( '{:>30} {:<0}'. format ( "Slice Vid Compressed : ", './ffmpegHelper.py -e18 v.mov 0:34 0:39 out.mov' ) )
 	print ( '{:>30} {:<0}'. format ( "Side By Side Video W Border : ", './ffmpegHelper.py -e19 c2.mov c1.mov 1 1 black out.mp4' ) )
+	print ( '{:>30} {:<0}'. format ( "Motion Design Audio BLog Design : ", './ffmpegHelper.py -e21 a.wav white out.mp4' ) )
+
 	print ( '{:>30} {:<0}'. format ( "Audio Volume : ", './ffmpegHelper.py -a1 a.mp3 2 b.mp3' ) )
 	print ( '{:>30} {:<0}'. format ( "Caption To A Photo : ", './ffmpegHelper.py -p1 i.png /pathto/font.ttf "Hello World" out.png' ) )
 	print ( '{:>30} {:<0}'. format ( "Caption From temp.txt : ", './ffmpegHelper.py -p2 #123456 "#344567" /home/lex/share/Mo_De_Studio/audio_blog/Bookerly/Bookerly-Bold.ttf "1280x720" "#123456" 10 out.png' ) )
@@ -193,6 +200,115 @@ if ( sys.argv[1] == "-i4"):
 	print ("*** Almost Lossless With Resize ***")
 	ffmpeg_command = "-i brandVideos.png -ss " + sys.argv[3] +" -to " + media_duration + " -codec:v libx264 "+ ' -filter_complex "crop=' + crop_value +',overlay=x=10:y=10" ' +" -profile:v baseline -preset slow -pix_fmt yuv420p -b:v 3500k -threads 0 -y"
 	useFFmpegClass()
+
+
+##### Changing Brand Location
+
+if ( sys.argv[1] == "-i42"):
+	crop_value= sys.argv[5]
+	print ("*** Almost Lossless With Resize ***")
+	ffmpeg_command = "-i brandVideos.png -ss " + sys.argv[3] +" -to " + media_duration + " -codec:v libx264 "+ ' -filter_complex "crop=' + crop_value +',overlay=x=770:y=680" ' +" -profile:v baseline -preset slow -pix_fmt yuv420p -b:v 3500k -threads 0 -y"
+	useFFmpegClass()
+
+
+
+
+def searchForConcatFilesAddAudioIfSilent():
+	print ("*** Searching For cx.x Videos To Concat ***")
+
+	listOfFilesToAlphabetize = []
+	tmpNoAudioFilename=""
+	sorttedFilesList = []
+	filesToDelete = []
+	#for name in glob.glob('./c\d+.*'):
+	for filename in os.listdir ("./"):
+		if ( re.match (r"c\d+.*" , filename ) and  os.path.splitext(filename)[1] != ".ts"):
+			# Display file name without extension
+			#print ( os.path.splitext(filename)[1] )
+
+			#ffmpeg -f lavfi -i anullsrc=channel_layout=stereo:sample_rate=44100 -i c9.mp4 -shortest -c:v copy -c:a aac c9a.mov
+
+			if ( getMediaAudioInfo ( filename, 'format', 'nb_streams' )	== 2 ):
+				listOfFilesToAlphabetize.append( '%s' % ( filename ) )
+			elif ( getMediaAudioInfo ( filename, 'format', 'nb_streams' ) == 1 ):
+				tmpNoAudioFilename = os.path.splitext(filename)[0]+"_.mkv"
+				print ("Adding Empty Audio To %s , tmpNoAudioFilename : %s" % (filename, tmpNoAudioFilename ) )
+				run('ffmpeg -f lavfi -i anullsrc=channel_layout=stereo:sample_rate=44100 -i %s -shortest -c:v copy -c:a aac -y %s' % ( filename, tmpNoAudioFilename ), stdout=PIPE, stderr=PIPE, universal_newlines=True, shell=True)	
+				listOfFilesToAlphabetize.append( '%s' % ( tmpNoAudioFilename ) )
+				filesToDelete.append ( tmpNoAudioFilename )
+
+			#checking if it has no audio
+			#if ( getMediaAudioInfo ( filename, 'format', 'nb_streams' )	== 1):
+			#	print ("Adding Empty Audio To %s" % filename )
+				#run('ffmpeg -f lavfi -i anullsrc=channel_layout=stereo:sample_rate=44100 -i %s -shortest -c:v copy -c:a aac -y %s_.mkv' % ( filename, os.path.splitext(filename)[0] ), stdout=PIPE, stderr=PIPE, universal_newlines=True, shell=True)
+
+	sorttedFilesList =  sorted ( listOfFilesToAlphabetize )
+
+	return sorttedFilesList , filesToDelete
+
+
+def removeTheseFiles( *removeList):
+	absolutePath = os.path.dirname(os.path.realpath(__file__)) 
+
+	for filename in removeList[0] :
+			# Remove file
+			print ( "Removing %s " % ( filename ) )
+			run('rm %s/%s' % ( absolutePath, filename ), stdout=PIPE, stderr=PIPE, universal_newlines=True, shell=True)
+			
+
+def createStringForConcat ( *filesToConcat ) :
+	inputFilesString = ""
+	filterComplexInternalString = "" 
+	vidPositionInList = ""
+
+	for i in filesToConcat[0] : 
+		inputFilesString = inputFilesString + "-i "+ i+ " "
+		vidPositionInList = filesToConcat[0].index( i )
+		filterComplexInternalString = filterComplexInternalString + "[%s:v:0] [%s:a:0] " % ( vidPositionInList , vidPositionInList )
+
+	#print ( "inputFilesString : %s" % ( inputFilesString ) ) 
+	#print ( "filterComplexInternalString : %s" % ( filterComplexInternalString ) ) 
+	
+
+	return inputFilesString, filterComplexInternalString
+
+#ffmpeg -i c1.MOV -i c2.MOV -i c3.MOV -i c4.MOV -i c5.MOV -i c6.MOV -i c7.MOV -i c8.MOV -i c9.mov -filter_complex "[0:v:0] [0:a:0] [1:v:0] [1:a:0] [2:v:0] [2:a:0] [3:v:0] [3:a:0] [4:v:0] [4:a:0] [5:v:0] [5:a:0] [6:v:0] [6:a:0] [7:v:0] [7:a:0] [8:v:0] [8:a:0] concat=n=9:v=1:a=1 [v] [a]" -map "[v]" -map "[a]" -vcodec libx264 -crf 23 -preset medium -acodec aac -strict experimental -ac 2 -ar 44100 -ab 128k -y t.mp4
+
+#ffmpeg -i c1.MOV -i c2.MOV -i c3.MOV -i c4.MOV -i c5.MOV -i c6.MOV -i c7.MOV -i c8.MOV -i c9_.mkv -filter_complex "[0:v:0] [0:a:0] [1:v:0] [1:a:0] [2:v:0] [2:a:0] [3:v:0] [3:a:0] [4:v:0] [4:a:0] [5:v:0] [5:a:0] [6:v:0] [6:a:0] [7:v:0] [7:a:0] [8:v:0] [8:a:0] concat=n=9:v=1:a=1 [v] [a]" -map "[v]" -map "[a]" -vcodec libx264 -crf 23 -preset medium -acodec aac -strict experimental -ac 2 -ar 44100 -ab 128k -y love.mp4
+
+
+#ffmpeg -i c1.MOV -i c2.MOV -i c3.MOV -i c4.MOV -i c5.MOV -i c6.MOV -i c7.MOV -i c8.MOV -i c9_.mkv -filter_complex " [0:v:0] [0:a:0] [1:v:1] [1:a:1] [2:v:2] [2:a:2] [3:v:3] [3:a:3] [4:v:4] [4:a:4] [5:v:5] [5:a:5] [6:v:6] [6:a:6] [7:v:7] [7:a:7] [8:v:8] [8:a:8]  concat=n=9:v=1:a=1 [v] [a]" -map "[v]" -map "[a]" -vcodec libx264 -crf 23 -preset medium -acodec aac -strict experimental -ac 2 -ar 44100 -ab 128k -y love.mp4
+
+
+
+if ( sys.argv[1] == "-lex1"):
+	print ("*** Concat Videos IG Brand Bottom Right ***")
+	filesToConcat, filesToDelete = searchForConcatFilesAddAudioIfSilent ()
+
+	inputFilesString, filterComplexInternalString = createStringForConcat ( filesToConcat )
+
+	#subprocess.call( 'ffmpeg -f concat -i l.txt -i brandVideos.png -filter_complex overlay=x=770:y=680 -c:v libx264 -c:a aac -preset slow -crf 18 -pix_fmt yuv420p -y ' + out_file , shell=True )
+
+	print (  'RUNNING :: ffmpeg %s -filter_complex -i brandVideos.png " %s concat=n=%s:v=1:a=1 [v] [a]; [v]overlay=x=770:y=680 [out]" -map "[out]" -map "[a]" -vcodec libx264 -crf 23 -preset medium -acodec aac -strict experimental -ac 2 -ar 44100 -ab 128k -y %s' % ( inputFilesString, filterComplexInternalString,  len ( filesToConcat ), out_file )  )
+
+	## No branding below
+	##run('ffmpeg %s -filter_complex " %s concat=n=%s:v=1:a=1 [v] [a]" -map "[v]" -map "[a]" -vcodec libx264 -crf 23 -preset medium -acodec aac -strict experimental -ac 2 -ar 44100 -ab 128k -y %s' % ( inputFilesString, filterComplexInternalString,  len ( filesToConcat ), out_file ), stdout=PIPE, stderr=PIPE, universal_newlines=True, shell=True)
+
+#ffmpeg -i c1.mov -i c2.mov -i c3_.mkv -i brandVideos.png  -filter_complex " [0:v:0] [0:a:0] [1:v:0] [1:a:0] [2:v:0] [2:a:0] concat=n=3:v=1:a=1 [v] [a]; [v]overlay=x=770:y=680 [out] "  -map "[out]" -map "[a]" -vcodec libx264 -crf 23 -preset medium -acodec aac -strict experimental -ac 2 -ar 44100 -ab 128k -y love.mp4
+
+	# Branding Below 
+	run('ffmpeg %s -i brandVideos.png -filter_complex " %s concat=n=%s:v=1:a=1 [v] [a]; [v]overlay=x=770:y=680 [out]" -map "[out]" -map "[a]" -vcodec libx264 -crf 23 -preset medium -acodec aac -strict experimental -ac 2 -ar 44100 -ab 128k -y %s' % ( inputFilesString, filterComplexInternalString,  len ( filesToConcat ), out_file ), stdout=PIPE, stderr=PIPE, universal_newlines=True, shell=True)
+
+	removeTheseFiles ( filesToDelete )
+
+	#subprocess.call( 'ffmpeg -f concat -i l.txt -i brandVideos.png -filter_complex overlay=x=770:y=680 -c:v libx264 -c:a aac -preset slow -crf 18 -pix_fmt yuv420p -y ' + out_file , shell=True )
+	# Remove the *.ts files
+	#searchForConcatFilesAndRemove ()	
+	# Run a preview of the video
+	subprocess.call( 'mplayer -loop 0 %s'  % ( out_file ) , shell=True )
+
+########
+
 
 # ] YouTube [
 
@@ -268,6 +384,10 @@ if ( sys.argv[1] == "-c3"):
 	ffmpeg_command = '-i %s -acodec copy -vcodec copy -map 0:v -map 1:a -y' % ( sys.argv[3] )
 	useFFmpegClass()
 
+
+# Must Update To The Following
+# ffmpeg -i c1.mov -i c2.mp4 -i c3.mp4 -i c4.mp4 -i c5.mp4 -i c6.mp4 -i c7.mkv -i c8.mp4 -filter_complex "[0:v:0] [1:v:0] [2:v:0] [3:v:0] [4:v:0] [5:v:0] [6:v:0] [7:v:0] concat=n=8:v=1 [v] " -map "[v]" -vcodec libx264 -crf 23 -preset medium -acodec aac -strict experimental -ac 2 -ar 44100 -ab 128k -y saraR_YT_20171025.mp4
+
 if ( sys.argv[1] == "-c4"):
 	print ("*** Concat Videos No Branding ***")
 	searchForConcatFiles ()
@@ -309,7 +429,7 @@ if ( sys.argv[1] == "-e4"):
 # ffmpeg -i MVI_5486.MOV -vframes 1 -ss 00:00:40 $(date +%Y%m%d-%H%M%S).png
 if ( sys.argv[1] == "-e5"):
 	print ("*** Extract Single Frame ***")
-	ffmpeg_command = '-vframes 1 -ss %s ' % ( sys.argv[3] )
+	ffmpeg_command = '-vframes 1 -ss %s -y' % ( sys.argv[3] )
 	useFFmpegClass()
 
 # ] Resive A Video [
@@ -396,7 +516,7 @@ if ( sys.argv[1] == "-e17"):
 	crop_value= sys.argv[5]
 	print ("*** Cut Out Portion Of Video ***")
 	#ffmpeg_command = "-ss " + sys.argv[3] +" -t " + media_duration + " -codec:v libx264 "+ ' -filter_complex "crop=' + crop_value +'" ' +" -profile:v baseline -preset slow -pix_fmt yuv420p -b:v 3500k -threads 0 -y"
-	ffmpeg_command = '-ss %s -t %s -codec:v libx264 -filter_complex "crop=%s" -profile:v baseline -preset slow -pix_fmt yuv420p -b:v 3500k -threads 0 -y ' % ( sys.argv[3], sys.argv[4], sys.argv[5] )
+	ffmpeg_command = '-ss %s -t %s -codec:v libx264 -filter_complex "crop=%s" -profile:v baseline -preset slow -pix_fmt yuv420p -b:v 3500k -threads 0 -an -y ' % ( sys.argv[3], media_duration, sys.argv[5] )
 	useFFmpegClass()
 
 if ( sys.argv[1] == "-e18"):
@@ -425,6 +545,23 @@ if ( sys.argv[1] == "-e19"):
 	else:
 		ffmpeg_command = '-i %s -filter_complex "[0:v]crop=%s:%s, pad=%s:%s:0:0:%s[tmp0]; [1:v]crop=%s:%s, pad=%s:%s:%s:0:%s[tmp1]; [tmp0][tmp1]hstack[v] " -map "[v]" -y' % ( sys.argv[3], leftNewWidth, h_Left, w_Left, h_Left, borderColor, rigthNewWidth, h_Right, w_Right, h_Right, sys.argv[5], borderColor )
 	useFFmpegClass()
+
+
+if ( sys.argv[1] == "-e20"):
+	crop_value= sys.argv[5]
+	print ("*** Cut Out Portion Of Video And Brand ***")
+	#ffmpeg_command = "-ss " + sys.argv[3] +" -t " + media_duration + " -codec:v libx264 "+ ' -filter_complex "crop=' + crop_value +'" ' +" -profile:v baseline -preset slow -pix_fmt yuv420p -b:v 3500k -threads 0 -y"
+	ffmpeg_command = '-i brandVideos.png -ss %s -t %s -codec:v libx264 -filter_complex "crop=%s, overlay=x=10:y=10" -profile:v baseline -preset slow -pix_fmt yuv420p -b:v 3500k -threads 0 -an -y ' % ( sys.argv[3], media_duration, sys.argv[5] )
+	useFFmpegClass()
+
+
+# ffmpeg -i tmp2.wav -i brandVideos.png -filter_complex "[0:a]showwaves=s=1280x720:mode=point:colors=white, overlay=x=10:y=10, drawtext=font=Open Sans Extrabold:textfile=temp.txt:fontcolor=0xFFFFFFFF:fontsize=30:x=10:y=60: #shadowcolor=0xFFFFFFEE:shadowx=2:shadowy=2,format=yuv420p[v]" -map "[v]" -map 0:a -c:v libx264 -c:a copy -y tS2017101.mkv 
+
+if ( sys.argv[1] == "-e21"):
+	print ("*** Motion Design Audio BLog Design ***")
+	ffmpeg_command = '-i brandVideos.png -filter_complex "[0:a]showwaves=s=1280x720:mode=point:colors=%s, overlay=x=10:y=10, drawtext=font=Open Sans Extrabold:textfile=temp.txt:fontcolor=0xFFFFFFFF:fontsize=30:x=10:y=60: #shadowcolor=0xFFFFFFEE:shadowx=2:shadowy=2,format=yuv420p[v]" -map "[v]" -map 0:a -c:v libx264 -c:a copy -y ' % ( sys.argv[3] )
+	useFFmpegClass()
+
 
 
 if ( sys.argv[1] == "-a1"):
