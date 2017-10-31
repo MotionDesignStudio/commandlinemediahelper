@@ -96,6 +96,56 @@ def searchForConcatFilesAndRemove():
 			# Remove cX.ts file
 			run('rm %s' % ( filename ), stdout=PIPE, stderr=PIPE, universal_newlines=True, shell=True)
 
+
+def searchForConcatFilesAddAudioIfSilent():
+	print ("*** Searching For cx.x Videos To Concat ***")
+
+	listOfFilesToAlphabetize = []
+	tmpNoAudioFilename=""
+	sorttedFilesList = []
+	filesToDelete = []
+	#for name in glob.glob('./c\d+.*'):
+	for filename in os.listdir ("./"):
+		if ( re.match (r"c\d+.*" , filename ) and  os.path.splitext(filename)[1] != ".ts"):
+			# Display file name without extension
+			#ffmpeg -f lavfi -i anullsrc=channel_layout=stereo:sample_rate=44100 -i c9.mp4 -shortest -c:v copy -c:a aac c9a.mov
+
+			if ( getMediaAudioInfo ( filename, 'format', 'nb_streams' )	== 2 ):
+				listOfFilesToAlphabetize.append( '%s' % ( filename ) )
+			elif ( getMediaAudioInfo ( filename, 'format', 'nb_streams' ) == 1 ):
+				tmpNoAudioFilename = os.path.splitext(filename)[0]+"_.mkv"
+				print ("Adding Empty Audio To %s , tmpNoAudioFilename : %s" % (filename, tmpNoAudioFilename ) )
+				run('ffmpeg -f lavfi -i anullsrc=channel_layout=stereo:sample_rate=44100 -i %s -shortest -c:v copy -c:a aac -y %s' % ( filename, tmpNoAudioFilename ), stdout=PIPE, stderr=PIPE, universal_newlines=True, shell=True)	
+				listOfFilesToAlphabetize.append( '%s' % ( tmpNoAudioFilename ) )
+				filesToDelete.append ( tmpNoAudioFilename )
+
+	sorttedFilesList =  sorted ( listOfFilesToAlphabetize )
+	return sorttedFilesList , filesToDelete
+
+
+def removeTheseFiles( *removeList):
+	absolutePath = os.path.dirname(os.path.realpath(__file__)) 
+
+	for filename in removeList[0] :
+			# Remove file
+			print ( "Removing %s " % ( filename ) )
+			run('rm %s/%s' % ( absolutePath, filename ), stdout=PIPE, stderr=PIPE, universal_newlines=True, shell=True)
+			
+
+def createStringForConcat ( *filesToConcat ) :
+	inputFilesString = ""
+	filterComplexInternalString = "" 
+	vidPositionInList = ""
+
+	for i in filesToConcat[0] : 
+		inputFilesString = inputFilesString + "-i "+ i+ " "
+		vidPositionInList = filesToConcat[0].index( i )
+		filterComplexInternalString = filterComplexInternalString + "[%s:v:0] [%s:a:0] " % ( vidPositionInList , vidPositionInList )
+
+	#print ( "inputFilesString : %s" % ( inputFilesString ) ) 
+	#print ( "filterComplexInternalString : %s" % ( filterComplexInternalString ) ) 
+	return inputFilesString, filterComplexInternalString
+
 # Help 
 
 def displayHelp ():
@@ -212,75 +262,6 @@ if ( sys.argv[1] == "-i42"):
 
 
 
-
-def searchForConcatFilesAddAudioIfSilent():
-	print ("*** Searching For cx.x Videos To Concat ***")
-
-	listOfFilesToAlphabetize = []
-	tmpNoAudioFilename=""
-	sorttedFilesList = []
-	filesToDelete = []
-	#for name in glob.glob('./c\d+.*'):
-	for filename in os.listdir ("./"):
-		if ( re.match (r"c\d+.*" , filename ) and  os.path.splitext(filename)[1] != ".ts"):
-			# Display file name without extension
-			#print ( os.path.splitext(filename)[1] )
-
-			#ffmpeg -f lavfi -i anullsrc=channel_layout=stereo:sample_rate=44100 -i c9.mp4 -shortest -c:v copy -c:a aac c9a.mov
-
-			if ( getMediaAudioInfo ( filename, 'format', 'nb_streams' )	== 2 ):
-				listOfFilesToAlphabetize.append( '%s' % ( filename ) )
-			elif ( getMediaAudioInfo ( filename, 'format', 'nb_streams' ) == 1 ):
-				tmpNoAudioFilename = os.path.splitext(filename)[0]+"_.mkv"
-				print ("Adding Empty Audio To %s , tmpNoAudioFilename : %s" % (filename, tmpNoAudioFilename ) )
-				run('ffmpeg -f lavfi -i anullsrc=channel_layout=stereo:sample_rate=44100 -i %s -shortest -c:v copy -c:a aac -y %s' % ( filename, tmpNoAudioFilename ), stdout=PIPE, stderr=PIPE, universal_newlines=True, shell=True)	
-				listOfFilesToAlphabetize.append( '%s' % ( tmpNoAudioFilename ) )
-				filesToDelete.append ( tmpNoAudioFilename )
-
-			#checking if it has no audio
-			#if ( getMediaAudioInfo ( filename, 'format', 'nb_streams' )	== 1):
-			#	print ("Adding Empty Audio To %s" % filename )
-				#run('ffmpeg -f lavfi -i anullsrc=channel_layout=stereo:sample_rate=44100 -i %s -shortest -c:v copy -c:a aac -y %s_.mkv' % ( filename, os.path.splitext(filename)[0] ), stdout=PIPE, stderr=PIPE, universal_newlines=True, shell=True)
-
-	sorttedFilesList =  sorted ( listOfFilesToAlphabetize )
-
-	return sorttedFilesList , filesToDelete
-
-
-def removeTheseFiles( *removeList):
-	absolutePath = os.path.dirname(os.path.realpath(__file__)) 
-
-	for filename in removeList[0] :
-			# Remove file
-			print ( "Removing %s " % ( filename ) )
-			run('rm %s/%s' % ( absolutePath, filename ), stdout=PIPE, stderr=PIPE, universal_newlines=True, shell=True)
-			
-
-def createStringForConcat ( *filesToConcat ) :
-	inputFilesString = ""
-	filterComplexInternalString = "" 
-	vidPositionInList = ""
-
-	for i in filesToConcat[0] : 
-		inputFilesString = inputFilesString + "-i "+ i+ " "
-		vidPositionInList = filesToConcat[0].index( i )
-		filterComplexInternalString = filterComplexInternalString + "[%s:v:0] [%s:a:0] " % ( vidPositionInList , vidPositionInList )
-
-	#print ( "inputFilesString : %s" % ( inputFilesString ) ) 
-	#print ( "filterComplexInternalString : %s" % ( filterComplexInternalString ) ) 
-	
-
-	return inputFilesString, filterComplexInternalString
-
-#ffmpeg -i c1.MOV -i c2.MOV -i c3.MOV -i c4.MOV -i c5.MOV -i c6.MOV -i c7.MOV -i c8.MOV -i c9.mov -filter_complex "[0:v:0] [0:a:0] [1:v:0] [1:a:0] [2:v:0] [2:a:0] [3:v:0] [3:a:0] [4:v:0] [4:a:0] [5:v:0] [5:a:0] [6:v:0] [6:a:0] [7:v:0] [7:a:0] [8:v:0] [8:a:0] concat=n=9:v=1:a=1 [v] [a]" -map "[v]" -map "[a]" -vcodec libx264 -crf 23 -preset medium -acodec aac -strict experimental -ac 2 -ar 44100 -ab 128k -y t.mp4
-
-#ffmpeg -i c1.MOV -i c2.MOV -i c3.MOV -i c4.MOV -i c5.MOV -i c6.MOV -i c7.MOV -i c8.MOV -i c9_.mkv -filter_complex "[0:v:0] [0:a:0] [1:v:0] [1:a:0] [2:v:0] [2:a:0] [3:v:0] [3:a:0] [4:v:0] [4:a:0] [5:v:0] [5:a:0] [6:v:0] [6:a:0] [7:v:0] [7:a:0] [8:v:0] [8:a:0] concat=n=9:v=1:a=1 [v] [a]" -map "[v]" -map "[a]" -vcodec libx264 -crf 23 -preset medium -acodec aac -strict experimental -ac 2 -ar 44100 -ab 128k -y love.mp4
-
-
-#ffmpeg -i c1.MOV -i c2.MOV -i c3.MOV -i c4.MOV -i c5.MOV -i c6.MOV -i c7.MOV -i c8.MOV -i c9_.mkv -filter_complex " [0:v:0] [0:a:0] [1:v:1] [1:a:1] [2:v:2] [2:a:2] [3:v:3] [3:a:3] [4:v:4] [4:a:4] [5:v:5] [5:a:5] [6:v:6] [6:a:6] [7:v:7] [7:a:7] [8:v:8] [8:a:8]  concat=n=9:v=1:a=1 [v] [a]" -map "[v]" -map "[a]" -vcodec libx264 -crf 23 -preset medium -acodec aac -strict experimental -ac 2 -ar 44100 -ab 128k -y love.mp4
-
-
-
 if ( sys.argv[1] == "-lex1"):
 	print ("*** Concat Videos IG Brand Bottom Right ***")
 	filesToConcat, filesToDelete = searchForConcatFilesAddAudioIfSilent ()
@@ -291,20 +272,12 @@ if ( sys.argv[1] == "-lex1"):
 
 	print (  'RUNNING :: ffmpeg %s -filter_complex -i brandVideos.png " %s concat=n=%s:v=1:a=1 [v] [a]; [v]overlay=x=770:y=680 [out]" -map "[out]" -map "[a]" -vcodec libx264 -crf 23 -preset medium -acodec aac -strict experimental -ac 2 -ar 44100 -ab 128k -y %s' % ( inputFilesString, filterComplexInternalString,  len ( filesToConcat ), out_file )  )
 
-	## No branding below
-	##run('ffmpeg %s -filter_complex " %s concat=n=%s:v=1:a=1 [v] [a]" -map "[v]" -map "[a]" -vcodec libx264 -crf 23 -preset medium -acodec aac -strict experimental -ac 2 -ar 44100 -ab 128k -y %s' % ( inputFilesString, filterComplexInternalString,  len ( filesToConcat ), out_file ), stdout=PIPE, stderr=PIPE, universal_newlines=True, shell=True)
-
-#ffmpeg -i c1.mov -i c2.mov -i c3_.mkv -i brandVideos.png  -filter_complex " [0:v:0] [0:a:0] [1:v:0] [1:a:0] [2:v:0] [2:a:0] concat=n=3:v=1:a=1 [v] [a]; [v]overlay=x=770:y=680 [out] "  -map "[out]" -map "[a]" -vcodec libx264 -crf 23 -preset medium -acodec aac -strict experimental -ac 2 -ar 44100 -ab 128k -y love.mp4
-
 	# Branding Below 
-	run('ffmpeg %s -i brandVideos.png -filter_complex " %s concat=n=%s:v=1:a=1 [v] [a]; [v]overlay=x=770:y=680 [out]" -map "[out]" -map "[a]" -vcodec libx264 -crf 23 -preset medium -acodec aac -strict experimental -ac 2 -ar 44100 -ab 128k -y %s' % ( inputFilesString, filterComplexInternalString,  len ( filesToConcat ), out_file ), stdout=PIPE, stderr=PIPE, universal_newlines=True, shell=True)
+	#run('ffmpeg %s -i brandVideos.png -filter_complex " %s concat=n=%s:v=1:a=1 [v] [a]; [v]overlay=x=770:y=680 [out]" -map "[out]" -map "[a]" -vcodec libx264 -crf 23 -preset medium -acodec aac -strict experimental -ac 2 -ar 44100 -ab 128k -y %s' % ( inputFilesString, filterComplexInternalString,  len ( filesToConcat ), out_file ), stdout=PIPE, stderr=PIPE, universal_newlines=True, shell=True)
+
+	subprocess.call ('ffmpeg %s -i brandVideos.png -filter_complex " %s concat=n=%s:v=1:a=1 [v] [a]; [v]overlay=x=770:y=680 [out]" -map "[out]" -map "[a]" -vcodec libx264 -crf 23 -preset medium -acodec aac -strict experimental -ac 2 -ar 44100 -ab 128k -y %s' % ( inputFilesString, filterComplexInternalString,  len ( filesToConcat ), out_file ), shell=True)
 
 	removeTheseFiles ( filesToDelete )
-
-	#subprocess.call( 'ffmpeg -f concat -i l.txt -i brandVideos.png -filter_complex overlay=x=770:y=680 -c:v libx264 -c:a aac -preset slow -crf 18 -pix_fmt yuv420p -y ' + out_file , shell=True )
-	# Remove the *.ts files
-	#searchForConcatFilesAndRemove ()	
-	# Run a preview of the video
 	subprocess.call( 'mplayer -loop 0 %s'  % ( out_file ) , shell=True )
 
 ########
@@ -354,25 +327,33 @@ if ( sys.argv[1] == "-p"):
 
 # ] Concat Videos Remove Audio [
 
-# ffmpeg -f concat -i l.txt -i brandVideos.png -codec:v libx264 -filter_complex "crop=720:720:250:0,scale=-1:640,overlay=x=10:y=10" -profile:v baseline -preset slow -pix_fmt yuv420p -b:v 3500k -threads 0 -an -y s1.mp4
-
 if ( sys.argv[1] == "-c1"):
 	print ("*** Concat Videos IG Brand  ***")
-	searchForConcatFiles ()
-	subprocess.call( 'ffmpeg -f concat -i l.txt -i brandVideos.png -filter_complex overlay=x=10:y=10 -c:v libx264 -preset slow -crf 18 -pix_fmt yuv420p -y ' + out_file , shell=True )
-	# Remove the *.ts files
-	searchForConcatFilesAndRemove ()	
-	# Run a preview of the video
+
+	filesToConcat, filesToDelete = searchForConcatFilesAddAudioIfSilent ()
+	inputFilesString, filterComplexInternalString = createStringForConcat ( filesToConcat )
+
+	print ( 'RUNNING :: ffmpeg %s -i brandVideos.png -filter_complex " %s concat=n=%s:v=1:a=1 [v] [a]; [v]overlay=x=10:y=10 [out]" -map "[out]" -map "[a]" -vcodec libx264 -crf 23 -preset medium -acodec aac -strict experimental -ac 2 -ar 44100 -ab 128k -y %s' % ( inputFilesString, filterComplexInternalString,  len ( filesToConcat ), out_file ) )
+
+	# Branding Below 
+	subprocess.call ('ffmpeg %s -i brandVideos.png -filter_complex " %s concat=n=%s:v=1:a=1 [v] [a]; [v]overlay=x=10:y=10 [out]" -map "[out]" -map "[a]" -vcodec libx264 -crf 23 -preset medium -acodec aac -strict experimental -ac 2 -ar 44100 -ab 128k -y %s' % ( inputFilesString, filterComplexInternalString,  len ( filesToConcat ), out_file ), shell=True)
+
+	removeTheseFiles ( filesToDelete )
 	subprocess.call( 'mplayer -loop 0 %s'  % ( out_file ) , shell=True )
 
 
 if ( sys.argv[1] == "-c2"):
 	print ("*** Concat Videos Youtube Branding Remove Audio ***")
-	searchForConcatFiles ()
-	subprocess.call( 'ffmpeg -f concat -i l.txt -i cornerFinalBlack.png -filter_complex overlay=x=0:y=0 -c:v libx264 -preset slow -crf 18 -pix_fmt yuv420p -an -y ' + out_file , shell=True )
-	# Remove the *.ts files
-	searchForConcatFilesAndRemove ()	
-	# Run a preview of the video
+
+	filesToConcat, filesToDelete = searchForConcatFilesAddAudioIfSilent ()
+	inputFilesString, filterComplexInternalString = createStringForConcat ( filesToConcat )
+
+	print ( 'RUNNING :: ffmpeg %s -i cornerFinalBlack.png -filter_complex " %s concat=n=%s:v=1:a=1 [v] [a]; [v]overlay=x=10:y=10 [out]" -map "[out]" -map "[a]" -vcodec libx264 -crf 23 -preset medium -acodec aac -strict experimental -ac 2 -ar 44100 -ab 128k -y %s' % ( inputFilesString, filterComplexInternalString,  len ( filesToConcat ), out_file ) )
+
+	# Branding Below
+	subprocess.call ('ffmpeg %s -i cornerFinalBlack.png -filter_complex " %s concat=n=%s:v=1:a=1 [v] [a]; [v]overlay=x=0:y=0 [out]" -map "[out]" -map "[a]" -vcodec libx264 -crf 23 -preset medium -acodec aac -strict experimental -ac 2 -ar 44100 -ab 128k -y %s' % ( inputFilesString, filterComplexInternalString,  len ( filesToConcat ), out_file ), shell=True)
+
+	removeTheseFiles ( filesToDelete )
 	subprocess.call( 'mplayer -loop 0 %s'  % ( out_file ) , shell=True )
 
 
@@ -390,12 +371,16 @@ if ( sys.argv[1] == "-c3"):
 
 if ( sys.argv[1] == "-c4"):
 	print ("*** Concat Videos No Branding ***")
-	searchForConcatFiles ()
-	subprocess.call( 'ffmpeg -f concat -i l.txt -c:a aac -c:v libx264 -preset slow -crf 18 -pix_fmt yuv420p -y ' + out_file , shell=True )
-	#subprocess.call( 'ffmpeg -f concat -i l.txt -c:a copy -c:v libx264 -preset slow -crf 18 -pix_fmt yuv420p -y ' + out_file , shell=True )
-	# Remove the *.ts files
-	searchForConcatFilesAndRemove ()	
-	# Run a preview of the video
+
+	filesToConcat, filesToDelete = searchForConcatFilesAddAudioIfSilent ()
+	inputFilesString, filterComplexInternalString = createStringForConcat ( filesToConcat )
+
+	print ( 'RUNNING :: ffmpeg %s -filter_complex " %s concat=n=%s:v=1:a=1 [v] [a]" -map "[v]" -map "[a]" -vcodec libx264 -crf 23 -preset medium -acodec aac -strict experimental -ac 2 -ar 44100 -ab 128k -y %s' % ( inputFilesString, filterComplexInternalString,  len ( filesToConcat ), out_file ) )
+
+	# NO Branding Below
+	subprocess.call ('ffmpeg %s -filter_complex " %s concat=n=%s:v=1:a=1 [v] [a]" -map "[v]" -map "[a]" -vcodec libx264 -crf 23 -preset medium -acodec aac -strict experimental -ac 2 -ar 44100 -ab 128k -y %s' % ( inputFilesString, filterComplexInternalString,  len ( filesToConcat ), out_file ), shell=True)
+
+	removeTheseFiles ( filesToDelete )
 	subprocess.call( 'mplayer -loop 0 %s'  % ( out_file ) , shell=True )
 
 # ] Slow Motion [
