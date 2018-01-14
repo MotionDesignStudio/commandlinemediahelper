@@ -50,7 +50,7 @@ if ( not re.search('-(h)', sys.argv[1] ) ):
 	print ( "Setting values for video_file and out_file"  )
 	video_file=sys.argv[2]
 	out_file=sys.argv[ len(sys.argv) - 1 ] # The last value passed to the code
-	if ( not re.search('^-(c1$|c2$|c4$|e1$|lex1$)', sys.argv[1] ) ): 
+	if ( not re.search('^-(c1$|c2$|c4$|c5$|e1$|lex1$)', sys.argv[1] ) ): 
 		# If the user specifies the length of zero aka 0 as the file length give them back the true length of the video
 		media_duration = getMediaAudioInfo( video_file, 'format', 'duration' ) if sys.argv[4] == "0" else sys.argv[4]
 
@@ -97,6 +97,14 @@ def searchForConcatFilesAndRemove():
 			run('rm %s' % ( filename ), stdout=PIPE, stderr=PIPE, universal_newlines=True, shell=True)
 
 
+# This method is used for sorting
+numbers = re.compile(r'(\d+)')
+def numericalSort(value):
+    parts = numbers.split(value)
+    parts[1::2] = map(int, parts[1::2])
+    return parts
+
+
 def searchForConcatFilesAddAudioIfSilent():
 	print ("*** Searching For cx.x Videos To Concat ***")
 
@@ -104,7 +112,7 @@ def searchForConcatFilesAddAudioIfSilent():
 	tmpNoAudioFilename=""
 	sorttedFilesList = []
 	filesToDelete = []
-	#for name in glob.glob('./c\d+.*'):
+ 
 	for filename in os.listdir ("./"):
 		if ( re.match (r"c\d+.*" , filename ) and  os.path.splitext(filename)[1] != ".ts"):
 			# Display file name without extension
@@ -119,7 +127,11 @@ def searchForConcatFilesAddAudioIfSilent():
 				listOfFilesToAlphabetize.append( '%s' % ( tmpNoAudioFilename ) )
 				filesToDelete.append ( tmpNoAudioFilename )
 
-	sorttedFilesList =  sorted ( listOfFilesToAlphabetize )
+	for infile in sorted(listOfFilesToAlphabetize, key=numericalSort):
+   		sorttedFilesList.append(infile)
+
+	print (" XXXX sorttedFilesList ::  %s" % sorttedFilesList)
+
 	return sorttedFilesList , filesToDelete
 
 
@@ -136,15 +148,17 @@ def createStringForConcat ( *filesToConcat ) :
 	inputFilesString = ""
 	filterComplexInternalString = "" 
 	vidPositionInList = ""
+	filterComplexInternalStringNoAudio=""
 
 	for i in filesToConcat[0] : 
 		inputFilesString = inputFilesString + "-i "+ i+ " "
 		vidPositionInList = filesToConcat[0].index( i )
 		filterComplexInternalString = filterComplexInternalString + "[%s:v:0] [%s:a:0] " % ( vidPositionInList , vidPositionInList )
+		filterComplexInternalStringNoAudio = filterComplexInternalStringNoAudio + "[%s:v:0] " % ( vidPositionInList )
 
 	#print ( "inputFilesString : %s" % ( inputFilesString ) ) 
 	#print ( "filterComplexInternalString : %s" % ( filterComplexInternalString ) ) 
-	return inputFilesString, filterComplexInternalString
+	return inputFilesString, filterComplexInternalString, filterComplexInternalStringNoAudio
 
 # Help 
 
@@ -163,6 +177,7 @@ def displayHelp ():
 	print ( '{:>30} {:<0}'. format ( "Concat Videos Youtube BRND : ", "./ffmpegHelper.py -c2 out.mp4" ) )
 	print ( '{:>30} {:<0}'. format ( "Combine Video and Audio : ", "./ffmpegHelper.py -c3 v.mov out.mp3 out.mkv" ) )
 	print ( '{:>30} {:<0}'. format ( "Concat Videos No Branding : ", "./ffmpegHelper.py -c4 out.mkv" ) )
+	print ( '{:>30} {:<0}'. format ( "Concat Vid YT Brnd No Audio : ", "./ffmpegHelper.py -c5 out.mkv" ) )
 	print ( '{:>30} {:<0}'. format ( "Overlay Text/Image 2 Video : ", './ffmpegHelper.py -t1 out.mov "Overlayed Text" /pathto/font.ttf out.mp4' ) )
 	print ( '{:>30} {:<0}'. format ( "Overlay Text To Video : ", './ffmpegHelper.py -t2 text.mov "Overlayed Text" fontName 20 d90000 out.mp4' ) )
 	print ( '{:>30} {:<0}'. format ( "Preview Video : ", './ffmpegHelper.py -p v.mov 0:34 0:39 720:720:300:0' ) )
@@ -266,7 +281,7 @@ if ( sys.argv[1] == "-lex1"):
 	print ("*** Concat Videos IG Brand Bottom Right ***")
 	filesToConcat, filesToDelete = searchForConcatFilesAddAudioIfSilent ()
 
-	inputFilesString, filterComplexInternalString = createStringForConcat ( filesToConcat )
+	inputFilesString, filterComplexInternalString, filterComplexInternalStringNoAudio = createStringForConcat ( filesToConcat )
 
 	#subprocess.call( 'ffmpeg -f concat -i l.txt -i brandVideos.png -filter_complex overlay=x=770:y=680 -c:v libx264 -c:a aac -preset slow -crf 18 -pix_fmt yuv420p -y ' + out_file , shell=True )
 
@@ -331,7 +346,7 @@ if ( sys.argv[1] == "-c1"):
 	print ("*** Concat Videos IG Brand  ***")
 
 	filesToConcat, filesToDelete = searchForConcatFilesAddAudioIfSilent ()
-	inputFilesString, filterComplexInternalString = createStringForConcat ( filesToConcat )
+	inputFilesString, filterComplexInternalString, filterComplexInternalStringNoAudio = createStringForConcat ( filesToConcat )
 
 	print ( 'RUNNING :: ffmpeg %s -i brandVideos.png -filter_complex " %s concat=n=%s:v=1:a=1 [v] [a]; [v]overlay=x=10:y=10 [out]" -map "[out]" -map "[a]" -vcodec libx264 -crf 23 -preset medium -acodec aac -strict experimental -ac 2 -ar 44100 -ab 128k -y %s' % ( inputFilesString, filterComplexInternalString,  len ( filesToConcat ), out_file ) )
 
@@ -346,7 +361,7 @@ if ( sys.argv[1] == "-c2"):
 	print ("*** Concat Videos Youtube Branding Remove Audio ***")
 
 	filesToConcat, filesToDelete = searchForConcatFilesAddAudioIfSilent ()
-	inputFilesString, filterComplexInternalString = createStringForConcat ( filesToConcat )
+	inputFilesString, filterComplexInternalString, filterComplexInternalStringNoAudio = createStringForConcat ( filesToConcat )
 
 	print ( 'RUNNING :: ffmpeg %s -i cornerFinalBlack.png -filter_complex " %s concat=n=%s:v=1:a=1 [v] [a]; [v]overlay=x=10:y=10 [out]" -map "[out]" -map "[a]" -vcodec libx264 -crf 23 -preset medium -acodec aac -strict experimental -ac 2 -ar 44100 -ab 128k -y %s' % ( inputFilesString, filterComplexInternalString,  len ( filesToConcat ), out_file ) )
 
@@ -373,7 +388,7 @@ if ( sys.argv[1] == "-c4"):
 	print ("*** Concat Videos No Branding ***")
 
 	filesToConcat, filesToDelete = searchForConcatFilesAddAudioIfSilent ()
-	inputFilesString, filterComplexInternalString = createStringForConcat ( filesToConcat )
+	inputFilesString, filterComplexInternalString, filterComplexInternalStringNoAudio = createStringForConcat ( filesToConcat )
 
 	print ( 'RUNNING :: ffmpeg %s -filter_complex " %s concat=n=%s:v=1:a=1 [v] [a]" -map "[v]" -map "[a]" -vcodec libx264 -crf 23 -preset medium -acodec aac -strict experimental -ac 2 -ar 44100 -ab 128k -y %s' % ( inputFilesString, filterComplexInternalString,  len ( filesToConcat ), out_file ) )
 
@@ -385,6 +400,25 @@ if ( sys.argv[1] == "-c4"):
 
 # ] Slow Motion [
 # ffmpeg -i s1.MOV -c copy -filter:v "setpts=2.5*PTS" -y s1s.MOV
+
+if ( sys.argv[1] == "-c5"):
+	print ("*** Concat Videos Youtube Branding Remove Audio ***")
+
+	# ffmpeg -i c2.mov -i c3.mov -i c17_.mkv  -i cornerFinalBlack.png -filter_complex " [0:v:0] [1:v:0] [2:v:0]  concat=n=3:v=1 [v] ; [v]overlay=x=0:y=0 [out]" -map "[out]" -vcodec libx264 -crf 23 -preset medium -an -y saraR_YT_20180110.mp4
+
+	filesToConcat, filesToDelete = searchForConcatFilesAddAudioIfSilent ()
+	inputFilesString, filterComplexInternalString, filterComplexInternalStringNoAudio = createStringForConcat ( filesToConcat )
+
+	print (  'RUNNING :: ffmpeg %s -i cornerFinalBlack.png -filter_complex " %s concat=n=%s:v=1 [v] ; [v]overlay=x=0:y=0 [out]" -map "[out]" -vcodec libx264 -crf 23 -preset medium -an -y %s' % ( inputFilesString, filterComplexInternalStringNoAudio,  len ( filesToConcat ), out_file )  )
+
+	# Branding Below
+	#subprocess.call ('ffmpeg %s -i cornerFinalBlack.png -filter_complex " %s concat=n=%s:v=1:a=1 [v] [a]; [v]overlay=x=0:y=0 [out]" -map "[out]" -map "[a]" -vcodec libx264 -crf 23 -preset medium -strict experimental -ab 128k -an -y %s' % ( inputFilesString, filterComplexInternalString,  len ( filesToConcat ), out_file ), shell=True)
+
+	subprocess.call ('ffmpeg %s -i cornerFinalBlack.png -filter_complex " %s concat=n=%s:v=1 [v] ; [v]overlay=x=0:y=0 [out]" -map "[out]" -vcodec libx264 -crf 23 -preset medium -an -y %s' % ( inputFilesString, filterComplexInternalStringNoAudio,  len ( filesToConcat ), out_file ), shell=True)
+
+	removeTheseFiles ( filesToDelete )
+	subprocess.call( 'mplayer -loop 0 %s'  % ( out_file ) , shell=True )
+
 
 if ( sys.argv[1] == "-e1"):
 	print ("*** Slow Motion ***")
