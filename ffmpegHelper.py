@@ -1,4 +1,4 @@
-#!/usr/bin/env python3.5
+#!/usr/bin/env python3.6
 
 import ffmpy 
 import sys
@@ -50,7 +50,7 @@ if ( not re.search('-(h)', sys.argv[1] ) ):
 	print ( "Setting values for video_file and out_file"  )
 	video_file=sys.argv[2]
 	out_file=sys.argv[ len(sys.argv) - 1 ] # The last value passed to the code
-	if ( not re.search('^-(c1$|c2$|c4$|c5$|e1$|lex1$)', sys.argv[1] ) ): 
+	if ( not re.search('^-(c1$|c2$|c4$|c5$|c6$|e1$|lex1$)', sys.argv[1] ) ): 
 		# If the user specifies the length of zero aka 0 as the file length give them back the true length of the video
 		media_duration = getMediaAudioInfo( video_file, 'format', 'duration' ) if sys.argv[4] == "0" else sys.argv[4]
 
@@ -178,6 +178,7 @@ def displayHelp ():
 	print ( '{:>30} {:<0}'. format ( "Combine Video and Audio : ", "./ffmpegHelper.py -c3 v.mov out.mp3 out.mkv" ) )
 	print ( '{:>30} {:<0}'. format ( "Concat Videos No Branding : ", "./ffmpegHelper.py -c4 out.mkv" ) )
 	print ( '{:>30} {:<0}'. format ( "Concat Vid YT Brnd No Audio : ", "./ffmpegHelper.py -c5 out.mkv" ) )
+	print ( '{:>30} {:<0}'. format ( "Concat Vid IG Brnd No Audio : ", "./ffmpegHelper.py -c6 out.mkv" ) )
 	print ( '{:>30} {:<0}'. format ( "Overlay Text/Image 2 Video : ", './ffmpegHelper.py -t1 out.mov "Overlayed Text" /pathto/font.ttf out.mp4' ) )
 	print ( '{:>30} {:<0}'. format ( "Overlay Text To Video : ", './ffmpegHelper.py -t2 text.mov "Overlayed Text" fontName 20 d90000 out.mp4' ) )
 	print ( '{:>30} {:<0}'. format ( "Preview Video : ", './ffmpegHelper.py -p v.mov 0:34 0:39 720:720:300:0' ) )
@@ -418,6 +419,23 @@ if ( sys.argv[1] == "-c5"):
 
 	removeTheseFiles ( filesToDelete )
 	subprocess.call( 'mplayer -loop 0 %s'  % ( out_file ) , shell=True )
+
+
+if ( sys.argv[1] == "-c6"):
+	print ("*** Concat Videos IG Branding Remove Audio ***")
+
+	filesToConcat, filesToDelete = searchForConcatFilesAddAudioIfSilent ()
+	inputFilesString, filterComplexInternalString, filterComplexInternalStringNoAudio = createStringForConcat ( filesToConcat )
+
+	print (  'RUNNING :: ffmpeg %s -i brandVideos.png -filter_complex " %s concat=n=%s:v=1 [v] ; [v]overlay=x=10:y=10 [out]" -map "[out]" -vcodec libx264 -crf 23 -preset medium -an -y %s' % ( inputFilesString, filterComplexInternalStringNoAudio,  len ( filesToConcat ), out_file )  )
+
+
+	subprocess.call ('ffmpeg %s -i brandVideos.png -filter_complex " %s concat=n=%s:v=1 [v] ; [v]overlay=x=10:y=10 [out]" -map "[out]" -vcodec libx264 -crf 23 -preset medium -an -y %s' % ( inputFilesString, filterComplexInternalStringNoAudio,  len ( filesToConcat ), out_file ), shell=True)
+
+	removeTheseFiles ( filesToDelete )
+	subprocess.call( 'mplayer -loop 0 %s'  % ( out_file ) , shell=True )
+
+
 
 
 if ( sys.argv[1] == "-e1"):
