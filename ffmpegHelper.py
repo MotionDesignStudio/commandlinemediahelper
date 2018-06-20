@@ -509,7 +509,9 @@ if ( sys.argv[1] == "-e12"):
 
 if ( sys.argv[1] == "-e13"):
 	print ("*** Turn Image Into Video ***")
-	run('ffmpeg -loop 1 -framerate 30000/1001 -i %s -c:v libx264 -profile:v baseline -t %s -pix_fmt yuvj420p -y %s' % ( video_file, sys.argv[3], out_file ), stdout=PIPE, stderr=PIPE, universal_newlines=True, shell=True)
+	print ('RUNNING :: ffmpeg -loop 1 -i %s -f lavfi -i anullsrc -c:v libx264  -profile:v baseline -t %s -pix_fmt yuvj420p -framerate 30000/1001 -shortest -c:a aac -y %s' % ( video_file, sys.argv[3], out_file ) )
+		
+	run('ffmpeg -loop 1 -i %s -f lavfi -i anullsrc -c:v libx264  -profile:v baseline -t %s -pix_fmt yuvj420p -framerate 30000/1001 -shortest -c:a aac -y %s' % ( video_file, sys.argv[3], out_file ), stdout=PIPE, stderr=PIPE, universal_newlines=True, shell=True)
 	subprocess.call( 'mplayer %s -loop 0'  % ( out_file ) , shell=True )
 
 
