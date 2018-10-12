@@ -6,8 +6,11 @@ A Python project to edit video, photo and audio using various system calls mostl
                     Examples : Videos | Audio | Photos
 
  Slice Vid 2 Time No Compr. :  ./ffmpegHelper.py -s1 v.mov 0:34 0:39 out.mov
+ 
  Slice Vid 2 Rnge No Compr. :  ./ffmpegHelper.py -s2 v.mov 0:34 0:39 out.mov
+ 
    IG Without Resize No Aud :  ./ffmpegHelper.py -i1 v.mov 0:34 0:39 720:720:300:0 out.mp4
+   
        IG -W- Resize No Aud :  ./ffmpegHelper.py -i2 v.mov 0:34 0:39 720:720:300:0 out.mp4
  Almost Lossless -W- Resize :  ./ffmpegHelper.py -i3 v.mov 0:34 0:39 720:720:300:0 out.mp4
           IG Without Resize :  ./ffmpegHelper.py -i4 v.mov 0:34 0:39 720:720:300:0 out.mp4
