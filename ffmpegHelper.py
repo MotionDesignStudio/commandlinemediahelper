@@ -50,7 +50,7 @@ if ( not re.search('-(h)', sys.argv[1] ) ):
 	print ( "Setting values for video_file and out_file"  )
 	video_file=sys.argv[2]
 	out_file=sys.argv[ len(sys.argv) - 1 ] # The last value passed to the code
-	if ( not re.search('^-(c1$|c2$|c4$|c5$|c6$|e1$|lex1$)', sys.argv[1] ) ): 
+	if ( not re.search('^-(c1$|c2$|c4$|c5$|c6$|c7$|e1$|lex1$)', sys.argv[1] ) ): 
 		# If the user specifies the length of zero aka 0 as the file length give them back the true length of the video
 		media_duration = getMediaAudioInfo( video_file, 'format', 'duration' ) if sys.argv[4] == "0" else sys.argv[4]
 
@@ -87,6 +87,35 @@ def searchForConcatFiles():
 
 	# Close the file
 	fo.close ()
+	
+	
+	
+	
+def searchForConcatFilesToTs():
+	print ("*** Searching For cx.x Videos To Concat to cx.ts***")
+	
+	stringOfTsFiles="concat:"
+	listOfFilesToAlphabetize = []
+	#for name in glob.glob('./c\d+.*'):
+	for filename in os.listdir ("./"):
+		if ( re.match (r"c\d+.*" , filename ) and  os.path.splitext(filename)[1] != ".ts"):
+			# Convert file to .ts
+			print ("Converting %s to %s.ts" % (filename, os.path.splitext(filename)[0] ) )
+			run('ffmpeg -i %s -c copy -bsf:v h264_mp4toannexb -f mpegts -y %s.ts' % ( filename, os.path.splitext(filename)[0] ), stdout=PIPE, stderr=PIPE, universal_newlines=True, shell=True)
+			listOfFilesToAlphabetize.append( '%s.ts' % ( os.path.splitext(filename)[0] ) )
+	
+	stringOfTsFiles += "|".join( sorted ( listOfFilesToAlphabetize ) )
+	return stringOfTsFiles, listOfFilesToAlphabetize
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
 
 def searchForConcatFilesAndRemove():
 	#print ("*** Searching For cx.ts Videos To Remove ***")
@@ -179,6 +208,7 @@ def displayHelp ():
 	print ( '{:>30} {:<0}'. format ( "Concat Videos No Branding : ", "./ffmpegHelper.py -c4 out.mkv" ) )
 	print ( '{:>30} {:<0}'. format ( "Concat Vid YT Brnd No Audio : ", "./ffmpegHelper.py -c5 out.mkv" ) )
 	print ( '{:>30} {:<0}'. format ( "Concat Vid IG Brnd No Audio : ", "./ffmpegHelper.py -c6 out.mkv" ) )
+	print ( '{:>30} {:<0}'. format ( "Concat MP4s No Transcoding : ", "./ffmpegHelper.py -c7 out.mp4" ) )	
 	print ( '{:>30} {:<0}'. format ( "Overlay Text/Image 2 Video : ", './ffmpegHelper.py -t1 out.mov "Overlayed Text" /pathto/font.ttf out.mp4' ) )
 	print ( '{:>30} {:<0}'. format ( "Overlay Text To Video : ", './ffmpegHelper.py -t2 text.mov "Overlayed Text" fontName 20 d90000 out.mp4' ) )
 	print ( '{:>30} {:<0}'. format ( "Preview Video : ", './ffmpegHelper.py -p v.mov 0:34 0:39 720:720:300:0' ) )
@@ -420,7 +450,6 @@ if ( sys.argv[1] == "-c5"):
 	removeTheseFiles ( filesToDelete )
 	subprocess.call( 'mplayer -loop 0 %s'  % ( out_file ) , shell=True )
 
-
 if ( sys.argv[1] == "-c6"):
 	print ("*** Concat Videos IG Branding Remove Audio ***")
 
@@ -435,8 +464,13 @@ if ( sys.argv[1] == "-c6"):
 	removeTheseFiles ( filesToDelete )
 	subprocess.call( 'mplayer -loop 0 %s'  % ( out_file ) , shell=True )
 
-
-
+if ( sys.argv[1] == "-c7"):
+	print ("*** Concat MP4 Videos No Transcoding, might work with other media formats \nIf videos they must all have auido or none. \nIt fails if mixed.***")
+	filesToConcat, filesToDelete = searchForConcatFilesToTs ()
+	print (  'RUNNING :: ffmpeg -i "%s" -c copy -bsf:a aac_adtstoasc -y %s' % ( filesToConcat, out_file  ) )
+	subprocess.call ('ffmpeg -i "%s" -c copy -bsf:a aac_adtstoasc -y %s' % ( filesToConcat, out_file ), shell=True)	
+	removeTheseFiles (filesToDelete)
+	subprocess.call( 'mplayer -loop 0 %s'  % ( out_file ) , shell=True )
 
 if ( sys.argv[1] == "-e1"):
 	print ("*** Slow Motion ***")
@@ -509,9 +543,7 @@ if ( sys.argv[1] == "-e12"):
 
 if ( sys.argv[1] == "-e13"):
 	print ("*** Turn Image Into Video ***")
-	print ('RUNNING :: ffmpeg -loop 1 -i %s -f lavfi -i anullsrc -c:v libx264  -profile:v baseline -t %s -pix_fmt yuvj420p -framerate 30000/1001 -shortest -c:a aac -y %s' % ( video_file, sys.argv[3], out_file ) )
-		
-	run('ffmpeg -loop 1 -i %s -f lavfi -i anullsrc -c:v libx264  -profile:v baseline -t %s -pix_fmt yuvj420p -framerate 30000/1001 -shortest -c:a aac -y %s' % ( video_file, sys.argv[3], out_file ), stdout=PIPE, stderr=PIPE, universal_newlines=True, shell=True)
+	run('ffmpeg -loop 1 -framerate 30000/1001 -i %s -c:v libx264 -profile:v baseline -t %s -pix_fmt yuvj420p -y %s' % ( video_file, sys.argv[3], out_file ), stdout=PIPE, stderr=PIPE, universal_newlines=True, shell=True)
 	subprocess.call( 'mplayer %s -loop 0'  % ( out_file ) , shell=True )
 
 
