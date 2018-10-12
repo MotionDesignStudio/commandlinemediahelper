@@ -6,22 +6,21 @@ A Python project to edit video, photo and audio using various system calls mostl
                     Examples : Videos | Audio | Photos
 
  Slice Vid 2 Time No Compr. :  ./ffmpegHelper.py -s1 v.mov 0:34 0:39 out.mov\
- Slice Vid 2 Rnge No Compr. :  ./ffmpegHelper.py -s2 v.mov 0:34 0:39 out.mov\ 
-   IG Without Resize No Aud :  ./ffmpegHelper.py -i1 v.mov 0:34 0:39 720:720:300:0 out.mp4
-   
-       IG -W- Resize No Aud :  ./ffmpegHelper.py -i2 v.mov 0:34 0:39 720:720:300:0 out.mp4
- Almost Lossless -W- Resize :  ./ffmpegHelper.py -i3 v.mov 0:34 0:39 720:720:300:0 out.mp4
-          IG Without Resize :  ./ffmpegHelper.py -i4 v.mov 0:34 0:39 720:720:300:0 out.mp4
-      YouTube Audio Removed :  ./ffmpegHelper.py -y1 v.mov 0:34 0:39 out.mp4
-                    YouTube :  ./ffmpegHelper.py -y2 v.mov 0:34 0:39 out.mp4
-     Concat Videos IG Brand :  ./ffmpegHelper.py -c1 out.mp4
- Concat Videos Youtube BRND :  ./ffmpegHelper.py -c2 out.mp4
-    Combine Video and Audio :  ./ffmpegHelper.py -c3 v.mov out.mp3 out.mkv
-  Concat Videos No Branding :  ./ffmpegHelper.py -c4 out.mkv
-Concat Vid YT Brnd No Audio :  ./ffmpegHelper.py -c5 out.mkv
-Concat Vid IG Brnd No Audio :  ./ffmpegHelper.py -c6 out.mkv
- Concat MP4s No Transcoding :  ./ffmpegHelper.py -c7 out.mp4
- Overlay Text/Image 2 Video :  ./ffmpegHelper.py -t1 out.mov "Overlayed Text" /pathto/font.ttf out.mp4
+ Slice Vid 2 Rnge No Compr. :  ./ffmpegHelper.py -s2 v.mov 0:34 0:39 out.mov\
+   IG Without Resize No Aud :  ./ffmpegHelper.py -i1 v.mov 0:34 0:39 720:720:300:0 out.mp4\
+       IG -W- Resize No Aud :  ./ffmpegHelper.py -i2 v.mov 0:34 0:39 720:720:300:0 out.mp4\
+ Almost Lossless -W- Resize :  ./ffmpegHelper.py -i3 v.mov 0:34 0:39 720:720:300:0 out.mp4\
+          IG Without Resize :  ./ffmpegHelper.py -i4 v.mov 0:34 0:39 720:720:300:0 out.mp4\
+      YouTube Audio Removed :  ./ffmpegHelper.py -y1 v.mov 0:34 0:39 out.mp4\
+                    YouTube :  ./ffmpegHelper.py -y2 v.mov 0:34 0:39 out.mp4\
+     Concat Videos IG Brand :  ./ffmpegHelper.py -c1 out.mp4\
+ Concat Videos Youtube BRND :  ./ffmpegHelper.py -c2 out.mp4\
+    Combine Video and Audio :  ./ffmpegHelper.py -c3 v.mov out.mp3 out.mkv\
+  Concat Videos No Branding :  ./ffmpegHelper.py -c4 out.mkv\
+Concat Vid YT Brnd No Audio :  ./ffmpegHelper.py -c5 out.mkv\
+Concat Vid IG Brnd No Audio :  ./ffmpegHelper.py -c6 out.mkv\
+ Concat MP4s No Transcoding :  ./ffmpegHelper.py -c7 out.mp4\
+ Overlay Text/Image 2 Video :  ./ffmpegHelper.py -t1 out.mov "Overlayed Text" /pathto/font.ttf out.mp4\
       Overlay Text To Video :  ./ffmpegHelper.py -t2 text.mov "Overlayed Text" fontName 20 d90000 out.mp4
               Preview Video :  ./ffmpegHelper.py -p v.mov 0:34 0:39 720:720:300:0
                 Slow Motion :  ./ffmpegHelper.py -e1 v.mov 4 out.mp4
