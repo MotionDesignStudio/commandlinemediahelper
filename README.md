@@ -50,7 +50,7 @@ Motion Design Audio BLog Design :  ./ffmpegHelper.py -e21 a.wav white out.mp4\
                        Hint :  Use 0 to choose media length example : ./ffmpegHelper.py -p v.mov 0:34 0 720:720:300:0\
                        Hint :  To use c1 and c2 the filenames must be sequenced like this you can mix and match suffixes c1.xxx, c2.xxx ... c400.xxx \
                        Hint :  IG Means Instagram\
-                       Help :  ./ffmpegHelper.py -h\
+                       Help :  ./ffmpegHelper.py -h
 
 ] Install These Dependencies [
 
