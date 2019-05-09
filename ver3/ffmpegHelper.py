@@ -208,8 +208,12 @@ def createStringForConcatFancyTransitions ( *filesToConcat ) :
 	
 	transSource = "./FilmBurn.glsl"
 	
-	# This variable will store the length of the fancy transiton
-	transDuration = 1
+	audioString=""
+	audioString2=""
+	audioConcat=""
+	
+	# This variable will store the length of the fancy transition
+	transDuration = 2
 	myDuration = 0
 	
 	for i in filesToConcat[0] : 
@@ -226,12 +230,16 @@ def createStringForConcatFancyTransitions ( *filesToConcat ) :
 		vidDuration=0
 
 		
-		filterComplexInternalString = filterComplexInternalString + "[%s:v:0] [%s:a:0] " % ( vidPositionInList , vidPositionInList )
+		#filterComplexInternalString = filterComplexInternalString + "[%s:v:0] [%s:a:0] " % ( vidPositionInList , vidPositionInList )
 		
 		
 		vidDuration = float ( getMediaInfo ( i , 'streams', 1, 'duration' ) ) 
 		myDuration = vidDuration - transDuration
-
+	
+		audioString2 = audioString2 + "[%s:a]atrim=0:%s[a%s]; " % ( vidPositionInList, myDuration, vidPositionInList )
+		
+		audioConcat = audioConcat + "[a%s]" %  ( vidPositionInList )
+		
 		
 		filterComplexInternalStringNoAudio = filterComplexInternalStringNoAudio + "[%s:v]split[v%s][v%s]; " % ( vidPositionInList, counterA, counterB  )
 		
@@ -253,13 +261,23 @@ def createStringForConcatFancyTransitions ( *filesToConcat ) :
 	#print ( "filterComplexInternalStringNoAudioTrans : %s" % ( filterComplexInternalStringNoAudioTrans ) ) 
 	
 
+	audioString = "%sconcat=n=%s:v=0:a=1[audio];" %  ( audioConcat ,len (filesToConcat[0]) )
+	
+
 	
 	#print ( "filterComplexlastLine : %s" % ( filterComplexlastLine ) )
+	#print ( "audioString : %s" % ( audioString ) )
+	#print ( "audioString2 : %s" % ( audioString2 ) )
+	#print ( "audioConcat : %s" % ( audioConcat ) )
 	
 	# Making a final longer string
 	filterComplexInternalStringNoAudio = filterComplexInternalStringNoAudio + " %s %s %s" % ( filterComplexInternalStringNoAudioTrim, filterComplexInternalStringNoAudioTrans, filterComplexlastLine  )
 	
+	# Add audio
+	filterComplexInternalString = "%s %s; %s" % ( audioString2, filterComplexInternalStringNoAudio, audioString )
+	
 	#print ( "filterComplexInternalStringNoAudio : %s" % ( filterComplexInternalStringNoAudio ) ) 
+	#print ( "filterComplexInternalString : %s" % ( filterComplexInternalString ) ) 
 	
 	return inputFilesString, filterComplexInternalString, filterComplexInternalStringNoAudio
 
@@ -554,6 +572,9 @@ if ( sys.argv[1] == "-c7"):
 	
 	
 	
+	
+	
+	
 	# ] Concat Videos Remove Audio Nice Transitions [
 
 if ( sys.argv[1] == "-c8"):
@@ -565,31 +586,32 @@ if ( sys.argv[1] == "-c8"):
 	#path2SpecialFFpeg="/home/lex/share/python/ffmpegHelper/ffmpeg/ffmpeg"
 	path2SpecialFFpeg="./ffmpeg"
 	
+	addRemoveAudio = "Y"
+	
+	if addRemoveAudio == "Y" :
+		print ( "ADDING AUDIO" )
+		print ( 'RUNNING :: %s %s -i brandVideos.png -filter_complex " %s [v]overlay=x=10:y=10 [out]" -map "[out]" -map "[audio]" -vcodec libx264 -crf 23 -preset medium -acodec aac -strict experimental -ac 2 -ar 44100 -ab 128k -y %s' % ( path2SpecialFFpeg, inputFilesString, filterComplexInternalString, out_file ) )
+		
+		# Branding Below 
+		subprocess.call ('%s %s -i brandVideos.png -filter_complex " %s [v]overlay=x=10:y=10 [out]" -map "[out]" -map "[audio]" -vcodec libx264 -crf 23 -preset medium -acodec aac -strict experimental -ac 2 -ar 44100 -ab 128k -y %s' % ( path2SpecialFFpeg, inputFilesString, filterComplexInternalString, out_file  ), shell=True)
+		
+		
+	elif addRemoveAudio == "N" :
+		# Branding Below 
+		subprocess.call ('%s %s -i brandVideos.png -filter_complex " %s; [v]overlay=x=10:y=10 [out]" -map "[out]" -vcodec libx264 -crf 23 -preset medium -acodec aac -strict experimental -ac 2 -ar 44100 -ab 128k -y %s' % ( path2SpecialFFpeg, inputFilesString, filterComplexInternalStringNoAudio, out_file ), shell=True)
+			
+	
 	#print ( "inputFilesString : " + inputFilesString )
 	#print ( "filterComplexInternalString : " + filterComplexInternalString )
 	#print ( "filterComplexInternalStringNoAudio : " + filterComplexInternalStringNoAudio )
 	
-	print ( 'RUNNING :: %s %s -i brandVideos.png -filter_complex " %s; [v]overlay=x=10:y=10 [out]" -map "[out]" -vcodec libx264 -crf 23 -preset medium -acodec aac -strict experimental -ac 2 -ar 44100 -ab 128k -y %s' % ( path2SpecialFFpeg, inputFilesString, filterComplexInternalStringNoAudio, out_file ) )
+	#print ( 'RUNNING :: %s %s -i brandVideos.png -filter_complex " %s; [v]overlay=x=10:y=10 [out]" -map "[out]" -vcodec libx264 -crf 23 -preset medium -acodec aac -strict experimental -ac 2 -ar 44100 -ab 128k -y %s' % ( path2SpecialFFpeg, inputFilesString, filterComplexInternalStringNoAudio, out_file ) )
 
 		# Branding Below 
-	subprocess.call ('%s %s -i brandVideos.png -filter_complex " %s; [v]overlay=x=10:y=10 [out]" -map "[out]" -vcodec libx264 -crf 23 -preset medium -acodec aac -strict experimental -ac 2 -ar 44100 -ab 128k -y %s' % ( path2SpecialFFpeg, inputFilesString, filterComplexInternalStringNoAudio, out_file ), shell=True)
+	#subprocess.call ('%s %s -i brandVideos.png -filter_complex " %s; [v]overlay=x=10:y=10 [out]" -map "[out]" -vcodec libx264 -crf 23 -preset medium -acodec aac -strict experimental -ac 2 -ar 44100 -ab 128k -y %s' % ( path2SpecialFFpeg, inputFilesString, filterComplexInternalStringNoAudio, out_file ), shell=True)
 	
 	removeTheseFiles ( filesToDelete )
 	subprocess.call( 'mplayer -loop 0 %s'  % ( out_file ) , shell=True )
-	
-	"""
-	filesToConcat, filesToDelete = searchForConcatFilesAddAudioIfSilent ()
-	inputFilesString, filterComplexInternalString, filterComplexInternalStringNoAudio = createStringForConcat ( filesToConcat )
-
-	print ( 'RUNNING :: ffmpeg %s -i brandVideos.png -filter_complex " %s concat=n=%s:v=1:a=1 [v] [a]; [v]overlay=x=10:y=10 [out]" -map "[out]" -map "[a]" -vcodec libx264 -crf 23 -preset medium -acodec aac -strict experimental -ac 2 -ar 44100 -ab 128k -y %s' % ( inputFilesString, filterComplexInternalString,  len ( filesToConcat ), out_file ) )
-
-	# Branding Below 
-	subprocess.call ('ffmpeg %s -i brandVideos.png -filter_complex " %s concat=n=%s:v=1:a=1 [v] [a]; [v]overlay=x=10:y=10 [out]" -map "[out]" -map "[a]" -vcodec libx264 -crf 23 -preset medium -acodec aac -strict experimental -ac 2 -ar 44100 -ab 128k -y %s' % ( inputFilesString, filterComplexInternalString,  len ( filesToConcat ), out_file ), shell=True)
-
-	removeTheseFiles ( filesToDelete )
-	subprocess.call( 'mplayer -loop 0 %s'  % ( out_file ) , shell=True )
-	
-	"""
 	
 	
 	
