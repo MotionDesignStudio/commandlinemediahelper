@@ -22,16 +22,40 @@ out_file=""
 def getMediaLengthFloatingNumber( the_file ):
 	print ( "CALCULATING %s LENGTH" % ( the_file ) )
 
-	
 	getMediaLengthValue = run('ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 %s' % ( the_file ), stdout=PIPE, stderr=PIPE, universal_newlines=True, shell=True)
 	return  getMediaLengthValue.stdout 
+
+
+
+# This is specific for mkv files
+#	vidDuration = float ( getMediaInfo ( i , 'format', 'duration' ) ) 
+
+# file type 
+	# getMediaInfo ( i , 'format', 'format_name' )
+
+
+
+
+
+
+
 
 
 def getMediaInfo( the_file, main_json_node, sub_json_node, info ):
 	print ( "Retreiving info for %s " % ( the_file ) )
 	getMediaLengthValue = run('ffprobe -v quiet -print_format json -show_format -show_streams %s' % ( the_file ), stdout=PIPE, stderr=PIPE, universal_newlines=True, shell=True)
 	#requestedInfo = json.loads (  getMediaLengthValue.stdout )['streams'][0]['width']
-	return json.loads (  getMediaLengthValue.stdout )[ main_json_node ][ sub_json_node ][ info ]
+	
+	#print ( " XXXXX : getMediaLengthValue : %s" % ( getMediaLengthValue )  )
+	print ( "FORMAT TYPE : %s" % ( json.loads (  getMediaLengthValue.stdout )[ "format" ][ "format_name" ] ) ) 
+	print ( "FORMAT TYPE : %s" % ( json.loads (  getMediaLengthValue.stdout )[ "format" ][ "format_name" ].find ("matroska,webm")  ) ) 
+	# Check if file is a .MKV ( Matroska Multimedia Container  )
+	if json.loads (  getMediaLengthValue.stdout )[ "format" ][ "format_name" ] == "matroska,webm" :
+		print ("%s is a Matroska Multimedia file." % ( the_file )  )
+		#print ( " LLOOOOKKKK  %s " % ( json.loads (  getMediaLengthValue.stdout )[ "format" ][ "duration" ] )  )
+		return json.loads (  getMediaLengthValue.stdout )[ "format" ][ "duration" ] 
+	else :
+		return json.loads (  getMediaLengthValue.stdout )[ main_json_node ][ sub_json_node ][ info ]
 
 # I need to use this for the 'format' node to check if file has an audio stream
 # it also contain info on the play duration of the file.
@@ -206,14 +230,18 @@ def createStringForConcatFancyTransitions ( *filesToConcat ) :
 	counterA=0
 	counterB=0
 	
-	transSource = "./FilmBurn.glsl"
+	#transSource = "./FilmBurn.glsl"
+	# Choose type of transition for all the videos
+	transSource = sys.argv[3]
 	
 	audioString=""
 	audioString2=""
 	audioConcat=""
 	
 	# This variable will store the length of the fancy transition
-	transDuration = 2
+	#transDuration = 1
+	transDuration = float( sys.argv[4] )
+	
 	myDuration = 0
 	
 	for i in filesToConcat[0] : 
@@ -231,12 +259,18 @@ def createStringForConcatFancyTransitions ( *filesToConcat ) :
 
 		
 		#filterComplexInternalString = filterComplexInternalString + "[%s:v:0] [%s:a:0] " % ( vidPositionInList , vidPositionInList )
+		#tmp = getMediaInfo ( i , 'streams', 1, 'duration' ) 
+		#tmp = i
+		#print ( "XXXXX vidDuration %s" % (  tmp ) )
 		
+		#print ( "Calling find_values " )
+		#find_values ( "duration", i )
+		#print ( "After Calling find_values " )
 		
 		vidDuration = float ( getMediaInfo ( i , 'streams', 1, 'duration' ) ) 
 		myDuration = vidDuration - transDuration
 	
-		audioString2 = audioString2 + "[%s:a]atrim=0:%s[a%s]; " % ( vidPositionInList, myDuration, vidPositionInList )
+		#audioString2 = audioString2 + "[%s:a]atrim=0:%s[a%s]; " % ( vidPositionInList, myDuration, vidPositionInList )
 		
 		audioConcat = audioConcat + "[a%s]" %  ( vidPositionInList )
 		
@@ -249,11 +283,16 @@ def createStringForConcatFancyTransitions ( *filesToConcat ) :
 		if vidPositionInList < len (filesToConcat[0]) - 1 :
 			filterComplexInternalStringNoAudioTrans = filterComplexInternalStringNoAudioTrans + "[v%s][v%s]gltransition=duration=1:source=%s[vt%s]; " % ( counterETrim, counterFTrans, transSource, vidPositionInList )
 			middleConcat=middleConcat + "[vt%s]" % ( vidPositionInList )
+			audioString2 = audioString2 + "[%s:a]atrim=0:%s[a%s]; " % ( vidPositionInList, myDuration, vidPositionInList )
 
+		# This gets the final audio length of the last clip.  This is necessary because there is no transition.
+		if vidPositionInList == len (filesToConcat[0]) - 1 :
+			audioString2 = audioString2 + "[%s:a]atrim=0:%s[a%s]; " % ( vidPositionInList, vidDuration, vidPositionInList )
+		
+		#print (  "YYYYY vidPositionInList :  %s  len (filesToConcat[0]) : %s" % ( vidPositionInList, len (filesToConcat[0]) ) )
 		
 		endConcat = "[v%s]" % ( counterETrim  )
 
-	#filterComplexlastLine = '[v1]%s%sconcat=n=%s[outv]" -map "[outv]"' % ( middleConcat, endConcat, len (filesToConcat[0]) + 1 )
 	filterComplexlastLine = '[v1]%s%sconcat=n=%s [v]' % ( middleConcat, endConcat, len (filesToConcat[0]) + 1 )
 			
 	#print ( "inputFilesString : %s" % ( inputFilesString ) ) 
@@ -572,7 +611,8 @@ if ( sys.argv[1] == "-c7"):
 	
 	
 	
-	
+	#./ffmpegHelper.py -c8 ./ffmpeg ./FilmBurn.glsl 1 Y o.mp4
+
 	
 	
 	# ] Concat Videos Remove Audio Nice Transitions [
@@ -584,9 +624,12 @@ if ( sys.argv[1] == "-c8"):
 	inputFilesString, filterComplexInternalString, filterComplexInternalStringNoAudio = createStringForConcatFancyTransitions ( filesToConcat )
 	
 	#path2SpecialFFpeg="/home/lex/share/python/ffmpegHelper/ffmpeg/ffmpeg"
-	path2SpecialFFpeg="./ffmpeg"
+	#path2SpecialFFpeg="./ffmpeg"
+	# Set path for the specially compile ffmpeg with gl-transitions
+	path2SpecialFFpeg=sys.argv[2]
 	
-	addRemoveAudio = "Y"
+	# Add or remove audio variable
+	addRemoveAudio = sys.argv[5]
 	
 	if addRemoveAudio == "Y" :
 		print ( "ADDING AUDIO" )
@@ -594,11 +637,14 @@ if ( sys.argv[1] == "-c8"):
 		
 		# Branding Below 
 		subprocess.call ('%s %s -i brandVideos.png -filter_complex " %s [v]overlay=x=10:y=10 [out]" -map "[out]" -map "[audio]" -vcodec libx264 -crf 23 -preset medium -acodec aac -strict experimental -ac 2 -ar 44100 -ab 128k -y %s' % ( path2SpecialFFpeg, inputFilesString, filterComplexInternalString, out_file  ), shell=True)
-		
-		
+				
 	elif addRemoveAudio == "N" :
+		print ( "REMOVING AUDIO" )
+		print ( 'RUNNING :: %s %s -i brandVideos.png -filter_complex " %s; [v]overlay=x=10:y=10 [out]" -map "[out]" -vcodec libx264 -crf 23 -preset medium -acodec aac -strict experimental -ac 2 -ar 44100 -ab 128k -y %s' % ( path2SpecialFFpeg, inputFilesString, filterComplexInternalStringNoAudio, out_file ) )
+		
 		# Branding Below 
 		subprocess.call ('%s %s -i brandVideos.png -filter_complex " %s; [v]overlay=x=10:y=10 [out]" -map "[out]" -vcodec libx264 -crf 23 -preset medium -acodec aac -strict experimental -ac 2 -ar 44100 -ab 128k -y %s' % ( path2SpecialFFpeg, inputFilesString, filterComplexInternalStringNoAudio, out_file ), shell=True)
+			
 			
 	
 	#print ( "inputFilesString : " + inputFilesString )
