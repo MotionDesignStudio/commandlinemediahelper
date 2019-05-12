@@ -26,33 +26,16 @@ def getMediaLengthFloatingNumber( the_file ):
 	return  getMediaLengthValue.stdout 
 
 
-
-# This is specific for mkv files
-#	vidDuration = float ( getMediaInfo ( i , 'format', 'duration' ) ) 
-
-# file type 
-	# getMediaInfo ( i , 'format', 'format_name' )
-
-
-
-
-
-
-
-
-
 def getMediaInfo( the_file, main_json_node, sub_json_node, info ):
 	print ( "Retreiving info for %s " % ( the_file ) )
 	getMediaLengthValue = run('ffprobe -v quiet -print_format json -show_format -show_streams %s' % ( the_file ), stdout=PIPE, stderr=PIPE, universal_newlines=True, shell=True)
-	#requestedInfo = json.loads (  getMediaLengthValue.stdout )['streams'][0]['width']
 	
 	#print ( " XXXXX : getMediaLengthValue : %s" % ( getMediaLengthValue )  )
-	print ( "FORMAT TYPE : %s" % ( json.loads (  getMediaLengthValue.stdout )[ "format" ][ "format_name" ] ) ) 
-	print ( "FORMAT TYPE : %s" % ( json.loads (  getMediaLengthValue.stdout )[ "format" ][ "format_name" ].find ("matroska,webm")  ) ) 
+	#print ( "FORMAT TYPE : %s" % ( json.loads (  getMediaLengthValue.stdout )[ "format" ][ "format_name" ] ) ) 
+	#print ( "FORMAT TYPE : %s" % ( json.loads (  getMediaLengthValue.stdout )[ "format" ][ "format_name" ].find ("matroska,webm")  ) ) 
 	# Check if file is a .MKV ( Matroska Multimedia Container  )
 	if json.loads (  getMediaLengthValue.stdout )[ "format" ][ "format_name" ] == "matroska,webm" :
 		print ("%s is a Matroska Multimedia file." % ( the_file )  )
-		#print ( " LLOOOOKKKK  %s " % ( json.loads (  getMediaLengthValue.stdout )[ "format" ][ "duration" ] )  )
 		return json.loads (  getMediaLengthValue.stdout )[ "format" ][ "duration" ] 
 	else :
 		return json.loads (  getMediaLengthValue.stdout )[ main_json_node ][ sub_json_node ][ info ]
@@ -230,7 +213,6 @@ def createStringForConcatFancyTransitions ( *filesToConcat ) :
 	counterA=0
 	counterB=0
 	
-	#transSource = "./FilmBurn.glsl"
 	# Choose type of transition for all the videos
 	transSource = sys.argv[3]
 	
@@ -300,7 +282,7 @@ def createStringForConcatFancyTransitions ( *filesToConcat ) :
 	#print ( "filterComplexInternalStringNoAudioTrans : %s" % ( filterComplexInternalStringNoAudioTrans ) ) 
 	
 
-	audioString = "%sconcat=n=%s:v=0:a=1[audio];" %  ( audioConcat ,len (filesToConcat[0]) )
+	audioString = "%sconcat=n=%s:v=0:a=1[audio]" %  ( audioConcat ,len (filesToConcat[0]) )
 	
 
 	
@@ -338,13 +320,15 @@ def displayHelp ():
 	print ( '{:>30} {:<0}'. format ( "IG Without Resize : ", "./ffmpegHelper.py -i4 v.mov 0:34 0:39 720:720:300:0 out.mp4" ) )
 	print ( '{:>30} {:<0}'. format ( "YouTube Audio Removed : ", "./ffmpegHelper.py -y1 v.mov 0:34 0:39 out.mp4" ) )
 	print ( '{:>30} {:<0}'. format ( "YouTube : ", "./ffmpegHelper.py -y2 v.mov 0:34 0:39 out.mp4" ) )
-	print ( '{:>30} {:<0}'. format ( "Concat Videos IG Brand : ", "./ffmpegHelper.py -c1 out.mp4" ) )
-	print ( '{:>30} {:<0}'. format ( "Concat Videos Youtube BRND : ", "./ffmpegHelper.py -c2 out.mp4" ) )
-	print ( '{:>30} {:<0}'. format ( "Combine Video and Audio : ", "./ffmpegHelper.py -c3 v.mov out.mp3 out.mkv" ) )
-	print ( '{:>30} {:<0}'. format ( "Concat Videos No Branding : ", "./ffmpegHelper.py -c4 out.mkv" ) )
-	print ( '{:>30} {:<0}'. format ( "Concat Vid YT Brnd No Audio : ", "./ffmpegHelper.py -c5 out.mkv" ) )
-	print ( '{:>30} {:<0}'. format ( "Concat Vid IG Brnd No Audio : ", "./ffmpegHelper.py -c6 out.mkv" ) )
+	print ( '{:>30} {:<0}'. format ( "Concat Vids IG Brand : ", "./ffmpegHelper.py -c1 out.mp4" ) )
+	print ( '{:>30} {:<0}'. format ( "Concat Vids Youtube BRND : ", "./ffmpegHelper.py -c2 out.mp4" ) )
+	print ( '{:>30} {:<0}'. format ( "Combine Vids and Audio : ", "./ffmpegHelper.py -c3 v.mov out.mp3 out.mkv" ) )
+	print ( '{:>30} {:<0}'. format ( "Concat Vids No Branding : ", "./ffmpegHelper.py -c4 out.mkv" ) )
+	print ( '{:>30} {:<0}'. format ( "Concat Vids YT Brnd No A : ", "./ffmpegHelper.py -c5 out.mkv" ) )
+	print ( '{:>30} {:<0}'. format ( "Concat Vids IG Brnd No A : ", "./ffmpegHelper.py -c6 out.mkv" ) )
 	print ( '{:>30} {:<0}'. format ( "Concat MP4s No Transcoding : ", "./ffmpegHelper.py -c7 out.mp4" ) )	
+	print ( '{:>30} {:<0}'. format ( "Concat Vids Fncy Trans No A : ", "./ffmpegHelper.py -c8 ./ffmpeg ./FilmBurn.glsl 1 N out.mp4" ) )	
+	print ( '{:>30} {:<0}'. format ( "Concat Vids Fncy Trans W A : ", "./ffmpegHelper.py -c8 ./ffmpeg ./FilmBurn.glsl 1 Y out.mp4" ) )	
 	print ( '{:>30} {:<0}'. format ( "Overlay Text/Image 2 Video : ", './ffmpegHelper.py -t1 out.mov "Overlayed Text" /pathto/font.ttf out.mp4' ) )
 	print ( '{:>30} {:<0}'. format ( "Overlay Text To Video : ", './ffmpegHelper.py -t2 text.mov "Overlayed Text" fontName 20 d90000 out.mp4' ) )
 	print ( '{:>30} {:<0}'. format ( "Preview Video : ", './ffmpegHelper.py -p v.mov 0:34 0:39 720:720:300:0' ) )
@@ -631,19 +615,27 @@ if ( sys.argv[1] == "-c8"):
 	# Add or remove audio variable
 	addRemoveAudio = sys.argv[5]
 	
+	# Temporarily removing branding because of a bug in ffmpeg that I can not resolve easily. 
+	
 	if addRemoveAudio == "Y" :
-		print ( "ADDING AUDIO" )
-		print ( 'RUNNING :: %s %s -i brandVideos.png -filter_complex " %s [v]overlay=x=10:y=10 [out]" -map "[out]" -map "[audio]" -vcodec libx264 -crf 23 -preset medium -acodec aac -strict experimental -ac 2 -ar 44100 -ab 128k -y %s' % ( path2SpecialFFpeg, inputFilesString, filterComplexInternalString, out_file ) )
+		print ( "ADDING AUDIO 201920192019" )
+		#print ( 'RUNNING :: %s %s -i brandVideos.png -filter_complex " %s [v]overlay=x=10:y=10 [out]" -map "[out]" -map "[audio]" -vcodec libx264 -crf 23 -preset medium -acodec aac -strict experimental -ac 2 -ar 44100 -ab 128k -y %s' % ( path2SpecialFFpeg, inputFilesString, filterComplexInternalString, out_file ) )
+		
+		print ( 'RUNNING :: %s %s -filter_complex " %s" -map "[v]" -map "[audio]" -vcodec libx264 -crf 23 -preset medium -acodec aac -strict experimental -ac 2 -ar 44100 -ab 128k -y %s' % ( path2SpecialFFpeg, inputFilesString, filterComplexInternalString, out_file ) )
 		
 		# Branding Below 
-		subprocess.call ('%s %s -i brandVideos.png -filter_complex " %s [v]overlay=x=10:y=10 [out]" -map "[out]" -map "[audio]" -vcodec libx264 -crf 23 -preset medium -acodec aac -strict experimental -ac 2 -ar 44100 -ab 128k -y %s' % ( path2SpecialFFpeg, inputFilesString, filterComplexInternalString, out_file  ), shell=True)
+		#subprocess.call ('%s %s -i brandVideos.png -filter_complex " %s [v]overlay=x=10:y=10 [out]" -map "[out]" -map "[audio]" -vcodec libx264 -crf 23 -preset medium -acodec aac -strict experimental -ac 2 -ar 44100 -ab 128k -y %s' % ( path2SpecialFFpeg, inputFilesString, filterComplexInternalString, out_file  ), shell=True)
+				
+		subprocess.call ('%s %s -filter_complex " %s" -map "[v]" -map "[audio]" -vcodec libx264 -crf 23 -preset medium -acodec aac -strict experimental -ac 2 -ar 44100 -ab 128k -y %s' % ( path2SpecialFFpeg, inputFilesString, filterComplexInternalString, out_file  ), shell=True)
 				
 	elif addRemoveAudio == "N" :
 		print ( "REMOVING AUDIO" )
 		print ( 'RUNNING :: %s %s -i brandVideos.png -filter_complex " %s; [v]overlay=x=10:y=10 [out]" -map "[out]" -vcodec libx264 -crf 23 -preset medium -acodec aac -strict experimental -ac 2 -ar 44100 -ab 128k -y %s' % ( path2SpecialFFpeg, inputFilesString, filterComplexInternalStringNoAudio, out_file ) )
 		
 		# Branding Below 
-		subprocess.call ('%s %s -i brandVideos.png -filter_complex " %s; [v]overlay=x=10:y=10 [out]" -map "[out]" -vcodec libx264 -crf 23 -preset medium -acodec aac -strict experimental -ac 2 -ar 44100 -ab 128k -y %s' % ( path2SpecialFFpeg, inputFilesString, filterComplexInternalStringNoAudio, out_file ), shell=True)
+		#subprocess.call ('%s %s -i brandVideos.png -filter_complex " %s; [v]overlay=x=10:y=10 [out]" -map "[out]" -vcodec libx264 -crf 23 -preset medium -acodec aac -strict experimental -ac 2 -ar 44100 -ab 128k -y %s' % ( path2SpecialFFpeg, inputFilesString, filterComplexInternalStringNoAudio, out_file ), shell=True)
+		
+		subprocess.call ('%s %s -filter_complex " %s" -map "[v]" -vcodec libx264 -crf 23 -preset medium -acodec aac -strict experimental -ac 2 -ar 44100 -ab 128k -y %s' % ( path2SpecialFFpeg, inputFilesString, filterComplexInternalStringNoAudio, out_file ), shell=True)
 			
 			
 	
