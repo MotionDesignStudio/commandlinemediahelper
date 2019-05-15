@@ -834,7 +834,9 @@ if ( sys.argv[1] == "-e21"):
 	
 	
 	
-# ./ffmpegHelper.py -e22 s2.mov  "2:10:2.5, 16:19:1.9" o.mp4	
+# ./ffmpegHelper.py -e22 s2.mov  "2:10:.5, 16:19:.5" o.mp4	
+
+# ./ffmpegHelper.py -e22 s2.mov  "2:10:.5:2.5, 16:20:.3:1.9" o.mp4	
 	
 	
 	
@@ -847,6 +849,8 @@ if ( sys.argv[1] == "-e22"):
 	videoString=""
 	audioString=""
 	concatString=""
+	
+	ts=""
 		
 	# List Of Cuts
 	cutList = []
@@ -884,10 +888,23 @@ if ( sys.argv[1] == "-e22"):
 		if  len ( matchLast ) == 2 :
 			cutList.append( "%s:%s" % (  str ( matchLast[0] ).zfill(2) , str ( matchLast[1] ).zfill(2)  ) )
 		elif len ( matchLast ) > 2 :
-			cutList.append( "%s:%s:%s" % (  str ( matchLast[0] ).zfill(2) , str ( matchLast[1] ).zfill(2),  str ( matchLast[2] ).zfill(2)  ) )
+			#cutList.append( "%s:%s:%s" % (  str ( matchLast[0] ).zfill(2) , str ( matchLast[1] ).zfill(2),  str ( matchLast[2] ).zfill(2)  ) )
+			
+			# loop over this list because its length can be anything to build cutlist
+			for searchingVolume in  matchLast :
+				#print ( " matchLast  %s" %  ( str ( searchingVolume ).zfill(2)   )  ) 
+				ts+=  "%s:" %  ( str ( searchingVolume ).zfill(2)   ) 
+		
+		#print ( "ts = %s" % ( ts[:-1] ))
+			cutList.append( "%s" % (   ts[:-1]  ) )
+			ts=""
 		
 		cutList.append( "%s:%s" % ( str ( matchLast[1] ).zfill(2) , str ( matchFirst[0] ).zfill(2)  ) )
+		#print ( "  str ( matchLast[1] ).zfill(2) ::::: %s  str ( matchFirst[0] ).zfill(2)  ) :::  " %  (   str ( matchLast[1] ).zfill(2) ) ,     str ( matchFirst[0] ).zfill(2)      ) 
+		
 		i+=1
+		
+	#print ( "cutList = %s " % ( cutList ))
 	
 	ii=0
 	lengthOfCutList = len ( cutList[1:]  ) 
@@ -905,6 +922,8 @@ if ( sys.argv[1] == "-e22"):
 			videoString += "[0:v]trim=%s:%s,setpts=PTS-STARTPTS,setpts=%s*PTS[v%s]; " % (  cutList[1:][ii].split(":")[0] , cutList[1:][ii].split(":")[1] , cutList[1:][ii].split(":")[2] , ii  )
 			audioString += "[0:a]atrim=%s:%s,asetpts=PTS-STARTPTS,atempo=1/%s[a%s];" % (  cutList[1:][ii].split(":")[0] , cutList[1:][ii].split(":")[1] , cutList[1:][ii].split(":")[2] , ii  ) 
 			
+			#print ( "volume = %s", (  cutList[1:][ii].split(":") )  )
+			
 		ii+=1
 	
 	iii=0
@@ -917,9 +936,9 @@ if ( sys.argv[1] == "-e22"):
 	print ( 'RUNNING :: ffmpeg -i %s -filter_complex " %s %s %s" -map "[v]" -map "[audio]" -vcodec libx264 -crf 23 -preset medium -acodec aac -strict experimental -ac 2 -ar 44100 -ab 128k -y %s' % ( video_file, videoString, audioString, concatString, out_file  ) )
 	
 	
-	subprocess.call ('ffmpeg -i %s -filter_complex " %s %s %s" -map "[v]" -map "[audio]" -vcodec libx264 -crf 23 -preset medium -acodec aac -strict experimental -ac 2 -ar 44100 -ab 128k -y %s' % ( video_file, videoString, audioString, concatString, out_file  ), shell=True)
+	#subprocess.call ('ffmpeg -i %s -filter_complex " %s %s %s" -map "[v]" -map "[audio]" -vcodec libx264 -crf 23 -preset medium -acodec aac -strict experimental -ac 2 -ar 44100 -ab 128k -y %s' % ( video_file, videoString, audioString, concatString, out_file  ), shell=True)
 	
-	subprocess.call( 'mplayer -loop 0 %s'  % ( out_file ) , shell=True )
+	#subprocess.call( 'mplayer -loop 0 %s'  % ( out_file ) , shell=True )
 
 	
 	
