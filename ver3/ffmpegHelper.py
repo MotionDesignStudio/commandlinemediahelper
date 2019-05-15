@@ -59,7 +59,8 @@ if ( not re.search('-(h)', sys.argv[1] ) ):
 	video_file=sys.argv[2]
 	out_file=sys.argv[ len(sys.argv) - 1 ] # The last value passed to the code
 	#if ( not re.search('^-(c1$|c2$|c4$|c5$|c6$|c7$|e1$|lex1$)', sys.argv[1] ) ): 
-	if ( not re.search('^-(c1$|c2$|c4$|c5$|c6$|c7$|c8$|e1$|lex1$)', sys.argv[1] ) ): 
+	#if ( not re.search('^-(c1$|c2$|c4$|c5$|c6$|c7$|c8$|e1$|lex1$)', sys.argv[1] ) ): 
+	if ( not re.search('^-(c1$|c2$|c4$|c5$|c6$|c7$|c8$|e1$|e22$|lex1$)', sys.argv[1] ) ): 
 		# If the user specifies the length of zero aka 0 as the file length give them back the true length of the video
 		media_duration = getMediaAudioInfo( video_file, 'format', 'duration' ) if sys.argv[4] == "0" else sys.argv[4]
 
@@ -352,6 +353,7 @@ def displayHelp ():
 	print ( '{:>30} {:<0}'. format ( "Slice Vid Compressed : ", './ffmpegHelper.py -e18 v.mov 0:34 0:39 out.mov' ) )
 	print ( '{:>30} {:<0}'. format ( "Side By Side Video W Border : ", './ffmpegHelper.py -e19 c2.mov c1.mov 1 1 black out.mp4' ) )
 	print ( '{:>30} {:<0}'. format ( "Motion Design Audio BLog Design : ", './ffmpegHelper.py -e21 a.wav white out.mp4' ) )
+	print ( '{:>30} {:<0}'. format ( "Multiple Speed Up/Slowmo : ", './ffmpegHelper.py -e22 "2:10:2.5, 16:19:1.9" out.mp4' ) )
 
 	print ( '{:>30} {:<0}'. format ( "Audio Volume : ", './ffmpegHelper.py -a1 a.mp3 2 b.mp3' ) )
 	print ( '{:>30} {:<0}'. format ( "Caption To A Photo : ", './ffmpegHelper.py -p1 i.png /pathto/font.ttf "Hello World" out.png' ) )
@@ -618,7 +620,7 @@ if ( sys.argv[1] == "-c8"):
 	# Temporarily removing branding because of a bug in ffmpeg that I can not resolve easily. 
 	
 	if addRemoveAudio == "Y" :
-		print ( "ADDING AUDIO 201920192019" )
+		print ( "ADDING AUDIO" )
 		#print ( 'RUNNING :: %s %s -i brandVideos.png -filter_complex " %s [v]overlay=x=10:y=10 [out]" -map "[out]" -map "[audio]" -vcodec libx264 -crf 23 -preset medium -acodec aac -strict experimental -ac 2 -ar 44100 -ab 128k -y %s' % ( path2SpecialFFpeg, inputFilesString, filterComplexInternalString, out_file ) )
 		
 		print ( 'RUNNING :: %s %s -filter_complex " %s" -map "[v]" -map "[audio]" -vcodec libx264 -crf 23 -preset medium -acodec aac -strict experimental -ac 2 -ar 44100 -ab 128k -y %s' % ( path2SpecialFFpeg, inputFilesString, filterComplexInternalString, out_file ) )
@@ -829,6 +831,101 @@ if ( sys.argv[1] == "-e21"):
 	useFFmpegClass()
 
 
+	
+	
+	
+# ./ffmpegHelper.py -e22 s2.mov  "2:10:2.5, 16:19:1.9" o.mp4	
+	
+	
+	
+	
+if ( sys.argv[1] == "-e22"):
+	print ("*** Multiple Speed Up ***")
+	
+	vidDuration = float ( getMediaInfo ( sys.argv[2] , 'streams', 1, 'duration' ) )
+	
+	videoString=""
+	audioString=""
+	concatString=""
+		
+	# List Of Cuts
+	cutList = []
+	# Build list from commandline parameter
+	tmpList=list ( sys.argv[3].replace(" ","").split(",") )
+	
+	# Adding to list so code outputs beginning and end.
+	addToEnd = "%s:%s" % ( vidDuration, vidDuration )
+	addToBeginning  = "0:0"
+	
+	tmpList.append( addToEnd )
+	tmpList.insert( 0, addToBeginning )
+	
+	length = len ( tmpList )
+
+	i=0	
+	while i < length-1:
+		
+		# Get all the values after the colons
+		matchLast = tmpList[i].split(":")
+		matchFirst = tmpList[i+1].split(":")
+
+		# Build list containing cut points
+		#cutList.append( "%s:%s" % ( matchLast[0], matchLast[1]  ) )
+		
+		#tt =  str ( matchLast[0] ).zfill(2)
+		#print ( "XX %s" % ( tt ) )
+		#print ( "matchLast[2] %s" % ( matchLast[1] ) )
+		#print ( "matchLast %s" % ( matchLast ) )
+		#print ( "Length matchLast %s" % ( len ( matchLast ) ) )
+		
+		# The zfill's are to padd single digits so they do not break things such as 03
+		# This feel potentially buggy if it encounters a character that is not numeric then what?
+		
+		if  len ( matchLast ) == 2 :
+			cutList.append( "%s:%s" % (  str ( matchLast[0] ).zfill(2) , str ( matchLast[1] ).zfill(2)  ) )
+		elif len ( matchLast ) > 2 :
+			cutList.append( "%s:%s:%s" % (  str ( matchLast[0] ).zfill(2) , str ( matchLast[1] ).zfill(2),  str ( matchLast[2] ).zfill(2)  ) )
+		
+		cutList.append( "%s:%s" % ( str ( matchLast[1] ).zfill(2) , str ( matchFirst[0] ).zfill(2)  ) )
+		i+=1
+	
+	ii=0
+	lengthOfCutList = len ( cutList[1:]  ) 
+	while ii < lengthOfCutList:
+		if len (  cutList[1:][ii].split(":")  ) == 2 : 
+			#print ( "[0:v]trim=%s:%s,setpts=PTS-STARTPTS[v%s]; " % (  cutList[1:][ii].split(":")[0] , cutList[1:][ii].split(":")[1] , ii  )   ) 
+			#print ( "[0:a]atrim=%s:%s,asetpts=PTS-STARTPTS[a%s]; " % (  cutList[1:][ii].split(":")[0] , cutList[1:][ii].split(":")[1] , ii  )   ) 
+			videoString += "[0:v]trim=%s:%s,setpts=PTS-STARTPTS[v%s]; " % (  cutList[1:][ii].split(":")[0] , cutList[1:][ii].split(":")[1] , ii  )
+			
+			audioString += "[0:a]atrim=%s:%s,asetpts=PTS-STARTPTS[a%s]; " % (  cutList[1:][ii].split(":")[0] , cutList[1:][ii].split(":")[1] , ii  )
+		elif len (  cutList[1:][ii].split(":")  ) > 2 :
+			#print ( "[0:v]trim=%s:%s,setpts=PTS-STARTPTS,setpts=%s*PTS[v%s];" % (  cutList[1:][ii].split(":")[0] , cutList[1:][ii].split(":")[1] , cutList[1:][ii].split(":")[2] , ii  )   ) 
+			#print ( "[0:a]atrim=%s:%s,asetpts=PTS-STARTPTS,atempo=1/%s[a%s];" % (  cutList[1:][ii].split(":")[0] , cutList[1:][ii].split(":")[1] , cutList[1:][ii].split(":")[2] , ii  )   )			
+			
+			videoString += "[0:v]trim=%s:%s,setpts=PTS-STARTPTS,setpts=%s*PTS[v%s]; " % (  cutList[1:][ii].split(":")[0] , cutList[1:][ii].split(":")[1] , cutList[1:][ii].split(":")[2] , ii  )
+			audioString += "[0:a]atrim=%s:%s,asetpts=PTS-STARTPTS,atempo=1/%s[a%s];" % (  cutList[1:][ii].split(":")[0] , cutList[1:][ii].split(":")[1] , cutList[1:][ii].split(":")[2] , ii  ) 
+			
+		ii+=1
+	
+	iii=0
+	while iii < ii:
+		concatString+= "[v%s][a%s]" % ( iii, iii ) 
+		iii+=1
+	
+	concatString+= "concat=n=%s:v=1:a=1[v][audio]" % ( iii )
+	
+	print ( 'RUNNING :: ffmpeg -i %s -filter_complex " %s %s %s" -map "[v]" -map "[audio]" -vcodec libx264 -crf 23 -preset medium -acodec aac -strict experimental -ac 2 -ar 44100 -ab 128k -y %s' % ( video_file, videoString, audioString, concatString, out_file  ) )
+	
+	
+	subprocess.call ('ffmpeg -i %s -filter_complex " %s %s %s" -map "[v]" -map "[audio]" -vcodec libx264 -crf 23 -preset medium -acodec aac -strict experimental -ac 2 -ar 44100 -ab 128k -y %s' % ( video_file, videoString, audioString, concatString, out_file  ), shell=True)
+	
+	subprocess.call( 'mplayer -loop 0 %s'  % ( out_file ) , shell=True )
+
+	
+	
+	
+	
+	
 
 if ( sys.argv[1] == "-a1"):
 	print ("*** Audio Volume ***")
