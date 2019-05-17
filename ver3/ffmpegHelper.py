@@ -26,6 +26,18 @@ def getMediaLengthFloatingNumber( the_file ):
 	return  getMediaLengthValue.stdout 
 
 
+def get_sec(time_str):
+	# If the user submit hours this works with three positions 2:25:55
+	try:
+		h, m, s = time_str.split(':')
+	except ValueError:
+	# If only minutes and seconds 25:55 this will assign a value of 0 to the h
+		m, s = time_str.split(':')
+		h=0
+	return float(h) * 3600 + float(m) * 60 + float(s)		
+    
+    
+
 def getMediaInfo( the_file, main_json_node, sub_json_node, info ):
 	print ( "Retreiving info for %s " % ( the_file ) )
 	getMediaLengthValue = run('ffprobe -v quiet -print_format json -show_format -show_streams %s' % ( the_file ), stdout=PIPE, stderr=PIPE, universal_newlines=True, shell=True)
@@ -353,7 +365,7 @@ def displayHelp ():
 	print ( '{:>30} {:<0}'. format ( "Slice Vid Compressed : ", './ffmpegHelper.py -e18 v.mov 0:34 0:39 out.mov' ) )
 	print ( '{:>30} {:<0}'. format ( "Side By Side Video W Border : ", './ffmpegHelper.py -e19 c2.mov c1.mov 1 1 black out.mp4' ) )
 	print ( '{:>30} {:<0}'. format ( "Motion Design Audio BLog Design : ", './ffmpegHelper.py -e21 a.wav white out.mp4' ) )
-	print ( '{:>30} {:<0}'. format ( "Multiple Speed Up/Slowmo : ", './ffmpegHelper.py -e22 "2:10:2.5:2, 16:19:1.9:.4" out.mp4' ) )
+	print ( '{:>30} {:<0}'. format ( "Multiple Speed Up/Slowmo : ", './ffmpegHelper.py -e22 v.mov "2-34-.3-4, 45-1:34-.3-0" out.mp4' ) )
 
 	print ( '{:>30} {:<0}'. format ( "Audio Volume : ", './ffmpegHelper.py -a1 a.mp3 2 b.mp3' ) )
 	print ( '{:>30} {:<0}'. format ( "Caption To A Photo : ", './ffmpegHelper.py -p1 i.png /pathto/font.ttf "Hello World" out.png' ) )
@@ -861,8 +873,8 @@ if ( sys.argv[1] == "-e22"):
 	tmpList=list ( sys.argv[3].replace(" ","").split(",") )
 	
 	# Adding to list so code outputs beginning and end.
-	addToEnd = "%s:%s" % ( vidDuration, vidDuration )
-	addToBeginning  = "0:0"
+	addToEnd = "%s-%s" % ( vidDuration, vidDuration )
+	addToBeginning  = "0-0"
 	
 	tmpList.append( addToEnd )
 	tmpList.insert( 0, addToBeginning )
@@ -873,8 +885,33 @@ if ( sys.argv[1] == "-e22"):
 	while i < length-1:
 		
 		# Get all the values after the colons
-		matchLast = tmpList[i].split(":")
-		matchFirst = tmpList[i+1].split(":")
+		matchLastORG = tmpList[i].split("-")
+		matchFirstORG = tmpList[i+1].split("-")
+		matchLast = []
+		matchFirst = []
+		
+		print ( "matchLastORG  %s matchFirstORG %s" % (  matchLastORG, matchFirstORG ) )
+		
+		
+		for a in matchLastORG :
+			#print ( "a in matchLast %s" %  ( a )   ) 
+			if ":" in a :
+				#print ( "Converting %s to seconds %s" % ( a,  get_sec (a) ) )
+				matchLast.append( get_sec (a) )
+			else :
+				#print ( "NOT Converting %s", ( a ) )
+				matchLast.append( a )			
+			
+		for b in matchFirstORG :
+			if ":" in b :
+				print ( "Converting %s" % ( b ) )
+				matchFirst.append( get_sec (b) )
+			else :
+				print ( "NOT Converting %s", ( b ) )
+				matchFirst.append( b )	
+	
+		print ( "matchLast  %s matchFirst %s" % (  matchLast, matchFirst ) )
+
 
 		# Build list containing cut points
 		#cutList.append( "%s:%s" % ( matchLast[0], matchLast[1]  ) )
@@ -903,8 +940,10 @@ if ( sys.argv[1] == "-e22"):
 			ts=""
 		
 		# This adds the in between time intervals for the transitions. 
+		#print ( "  str ( matchLast[1] ).zfill(2) ::::: %s  str ( matchFirst[0] ).zfill(2)  ) :::  " %  (   str ( matchLast[1] ).zfill(2) ) ,     str ( matchFirst[0] ).zfill(2)      ) 
+		
 		cutList.append( "%s:%s" % ( str ( matchLast[1] ).zfill(2) , str ( matchFirst[0] ).zfill(2)  ) )
-		print ( "  str ( matchLast[1] ).zfill(2) ::::: %s  str ( matchFirst[0] ).zfill(2)  ) :::  " %  (   str ( matchLast[1] ).zfill(2) ) ,     str ( matchFirst[0] ).zfill(2)      ) 
+
 		
 		i+=1
 		
@@ -928,7 +967,7 @@ if ( sys.argv[1] == "-e22"):
 				cutVolume =  cutList[1:][ii].split(":")[3]
 			except IndexError:
 				cutVolume = 1
-				print ( "cutVolume %s", ( cutVolume ) )
+				#print ( "cutVolume %s" % ( cutVolume ) )
 			
 			
 			
