@@ -367,7 +367,7 @@ def displayHelp ():
 	print ( '{:>30} {:<0}'. format ( "Motion Design Audio BLog Design : ", './ffmpegHelper.py -e21 a.wav white out.mp4' ) )
 	print ( '{:>30} {:<0}'. format ( "Multiple Speed Up/Slowmo : ", './ffmpegHelper.py -e22 v.mov "2-34-.3-4, 45-1:34-.3-0" out.mp4' ) )
 
-	print ( '{:>30} {:<0}'. format ( "Boomerang Videos : ", './ffmpegHelper.py -e23 v.mov 0:36 0:39 720:720:300:0 .8 Y out.mp4' ) )
+	print ( '{:>30} {:<0}'. format ( "Boomerang Videos : ", './ffmpegHelper.py -e23 v.mov 36 39 720:720:300:0 .8 Y out.mp4' ) )
 	print ( '{:>30} {:<0}'. format ( "Boomerang Videos GIF : ", './ffmpegHelper.py -e24 v.mov 36 39 720:720:300:0 .8 12 480 0 out.gif' ) )
 
 	print ( '{:>30} {:<0}'. format ( "Audio Volume : ", './ffmpegHelper.py -a1 a.mp3 2 b.mp3' ) )
