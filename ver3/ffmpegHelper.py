@@ -367,6 +367,9 @@ def displayHelp ():
 	print ( '{:>30} {:<0}'. format ( "Motion Design Audio BLog Design : ", './ffmpegHelper.py -e21 a.wav white out.mp4' ) )
 	print ( '{:>30} {:<0}'. format ( "Multiple Speed Up/Slowmo : ", './ffmpegHelper.py -e22 v.mov "2-34-.3-4, 45-1:34-.3-0" out.mp4' ) )
 
+	print ( '{:>30} {:<0}'. format ( "Boomerang Videos : ", './ffmpegHelper.py -e23 v.mov 0:36 0:39 720:720:300:0 .8 Y out.mp4' ) )
+	print ( '{:>30} {:<0}'. format ( "Boomerang Videos GIF : ", './ffmpegHelper.py -e24 v.mov 36 39 720:720:300:0 .8 12 480 0 out.gif' ) )
+
 	print ( '{:>30} {:<0}'. format ( "Audio Volume : ", './ffmpegHelper.py -a1 a.mp3 2 b.mp3' ) )
 	print ( '{:>30} {:<0}'. format ( "Caption To A Photo : ", './ffmpegHelper.py -p1 i.png /pathto/font.ttf "Hello World" out.png' ) )
 	print ( '{:>30} {:<0}'. format ( "Caption From temp.txt : ", './ffmpegHelper.py -p2 #123456 "#344567" /home/lex/share/Mo_De_Studio/audio_blog/Bookerly/Bookerly-Bold.ttf "1280x720" "#123456" 10 out.png' ) )
@@ -998,7 +1001,71 @@ if ( sys.argv[1] == "-e22"):
 	
 	subprocess.call( 'mplayer -loop 0 %s'  % ( out_file ) , shell=True )
 
+
+
+# ./ffmpegHelper.py -e23 MVI_6551.MOV 0:36 0:39 720:720:300:0 .8 Y br.mp4
+
+if ( sys.argv[1] == "-e23"):	
+	print ("*** Boomerang Effect ***")
 	
+	startTime = sys.argv[3]
+	endTime = sys.argv[4] 
+	myDimensions = sys.argv[5]
+	vidAudiSpeed = sys.argv[6]
+
+	audioVolume=1
+
+	if ( sys.argv[7] =="N" ):
+		print ("REMOVE AUDIO")
+		audioVolume=0
+
+	videoString = "[0:v]trim={0}:{1}, crop={2}, setpts=PTS-STARTPTS, setpts={3}*PTS[v1]; [0:v]trim={0}:{1}, crop={2}, reverse,setpts=PTS-STARTPTS, setpts={3}*PTS[reverseVideo];".format( startTime, endTime, myDimensions, vidAudiSpeed )
+
+	audioString = "[0:a]atrim={0}:{1}, asetpts=PTS-STARTPTS, atempo=1/{2}, volume={3}[a1];  [0:a]atrim={0}:{1}, areverse,asetpts=PTS-STARTPTS, atempo=1/{2}, volume={3}[reverseAudio];".format( startTime, endTime, vidAudiSpeed, audioVolume )
+
+	concatString = "[v1][a1][reverseVideo][reverseAudio] concat=n=2:v=1:a=1[v][audio]"
+
+	print ( 'RUNNING :: ffmpeg -i %s -filter_complex " %s %s %s" -map "[v]" -map "[audio]" -vcodec libx264 -crf 23 -preset medium -acodec aac -strict experimental -ac 2 -ar 44100 -ab 128k -y %s' % ( video_file, videoString, audioString, concatString, out_file  ) )
+	
+	
+	subprocess.call ('ffmpeg -i %s -filter_complex " %s %s %s" -map "[v]" -map "[audio]" -vcodec libx264 -crf 23 -preset medium -acodec aac -strict experimental -ac 2 -ar 44100 -ab 128k -y %s' % ( video_file, videoString, audioString, concatString, out_file  ), shell=True)
+
+	subprocess.call( 'mplayer -loop 0 %s'  % ( out_file ) , shell=True )
+
+
+# ./ffmpegHelper.py -e24 MVI_6551.MOV 36 39 720:720:300:0 .8 12 480 0 out.gif
+
+if ( sys.argv[1] == "-e24"):	
+	print ("*** Boomerang Effect GIF ***")
+	
+	startTime = sys.argv[3]
+	endTime = sys.argv[4] 
+	myDimensions = sys.argv[5]
+	vidSpeed = sys.argv[6]
+	frameRate = sys.argv[7]
+	vidWid = sys.argv[8]
+	vidHeight = sys.argv[9]
+
+	# This assigns a negative -2 is 0 is sent.  
+	# -2 will ensure the file dimensions ends with a size divisible by 2.
+	# If you want to speficy exact dimension change -2 to -1
+	if ( vidHeight == "0" ):
+		vidHeight = -2
+
+	if ( vidWid == "0" ):
+		vidWid = -2
+
+	videoString = "[0:v]trim={0}:{1}, crop={2}, setpts=PTS-STARTPTS, setpts={3}*PTS, loop=loop=0, split=2 [v1] [reverseMe]; [reverseMe] reverse,setpts=PTS-STARTPTS, setpts={3}*PTS, loop=loop=0 [reverseVideo]; [v1][reverseVideo] concat=n=2:v=1, fps={4}, scale=w={5}:h={6} ,split[n1][n2];[n1]palettegen[p];[n2][p]paletteuse [v] ".format( startTime, endTime, myDimensions, vidSpeed, frameRate, vidWid, vidHeight )
+
+
+	print ( 'RUNNING :: ffmpeg -i %s -filter_complex " %s " -map "[v]" -y %s' % ( video_file, videoString, out_file  ) )
+		
+	subprocess.call ('ffmpeg -i %s -filter_complex " %s " -map "[v]" -y %s' % ( video_file, videoString, out_file  ), shell=True)
+
+	subprocess.call( 'mplayer -loop 0 %s'  % ( out_file ) , shell=True )
+
+
+
 	
 	
 	
